@@ -1,5 +1,6 @@
 const API = 'http://localhost:3000/api';
 let editingAssetId = null;
+let editingTransactionId = null;
 
 // ─── SAYFA YÖNETİMİ ───────────────────────────────────────
 function showPage(name) {
@@ -16,8 +17,7 @@ function showPage(name) {
 async function loadSummary() {
   const res = await fetch(`${API}/portfolio/summary`);
   const data = await res.json();
-  document.getElementById('total-amount').textContent =
-    formatMoney(data.totalInvested);
+  document.getElementById('total-amount').textContent = formatMoney(data.totalInvested);
   const grid = document.getElementById('summary-grid');
   grid.innerHTML = '';
   const typeLabels = { ALTIN: '🥇 Altın', DOVIZ: '💵 Döviz', KRIPTO: '🪙 Kripto', HISSE: '📈 Hisse', FON: '🏦 Fon' };
@@ -38,13 +38,16 @@ async function loadSummary() {
 }
 
 // ─── VARLIKLAR ─────────────────────────────────────────────
-async function loadAssets() {
+async function loadAssets(searchTerm = '') {
   const res = await fetch(`${API}/assets`);
-  const assets = await res.json();
+  let assets = await res.json();
+  if (searchTerm) {
+    assets = assets.filter(a => a.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  }
   const list = document.getElementById('assets-list');
   list.innerHTML = '';
   if (assets.length === 0) {
-    list.innerHTML = '<div class="empty">Henüz varlık eklenmedi.</div>';
+    list.innerHTML = '<div class="empty">Varlık bulunamadı.</div>';
     return;
   }
   assets.forEach(a => {
@@ -83,27 +86,22 @@ async function saveAsset() {
   const name = document.getElementById('asset-name').value.trim();
   const type = document.getElementById('asset-type').value;
   const unit = document.getElementById('asset-unit').value.trim();
-
   if (!name || !unit) {
     document.getElementById('asset-error').textContent = 'Tüm alanları doldurun.';
     return;
   }
-
   const method = editingAssetId ? 'PUT' : 'POST';
   const url = editingAssetId ? `${API}/assets/${editingAssetId}` : `${API}/assets`;
-
   const res = await fetch(url, {
     method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, type, unit })
   });
-
   if (!res.ok) {
     const err = await res.json();
     document.getElementById('asset-error').textContent = err.error;
     return;
   }
-
   closeAssetModal();
   loadAssets();
 }
@@ -132,7 +130,6 @@ async function loadTransactions() {
     return;
   }
   txns.forEach(t => {
-    const total = (t.quantity * t.buy_price).toLocaleString('tr-TR');
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
@@ -142,6 +139,7 @@ async function loadTransactions() {
         <p style="margin-top:4px; color:#475569">${t.date}${t.notes ? ' · ' + t.notes : ''}</p>
       </div>
       <div class="card-actions">
+        <button class="btn btn-secondary" onclick="openTransactionEditModal(${t.id}, ${t.asset_id}, ${t.quantity}, ${t.buy_price}, '${t.date}', '${t.notes || ''}')">Düzenle</button>
         <button class="btn btn-danger" onclick="deleteTransaction(${t.id})">Sil</button>
       </div>
     `;
@@ -150,6 +148,7 @@ async function loadTransactions() {
 }
 
 async function openTransactionModal() {
+  editingTransactionId = null;
   const res = await fetch(`${API}/assets`);
   const assets = await res.json();
   const select = document.getElementById('tx-asset');
@@ -164,6 +163,7 @@ async function openTransactionModal() {
     opt.textContent = `${a.name} (${a.type})`;
     select.appendChild(opt);
   });
+  document.getElementById('tx-modal-title').textContent = 'Yeni İşlem Ekle';
   document.getElementById('tx-date').value = new Date().toISOString().slice(0, 10);
   document.getElementById('tx-quantity').value = '';
   document.getElementById('tx-price').value = '';
@@ -172,8 +172,31 @@ async function openTransactionModal() {
   document.getElementById('transaction-modal').classList.add('open');
 }
 
+async function openTransactionEditModal(id, assetId, quantity, buyPrice, date, notes) {
+  editingTransactionId = id;
+  const res = await fetch(`${API}/assets`);
+  const assets = await res.json();
+  const select = document.getElementById('tx-asset');
+  select.innerHTML = '';
+  assets.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a.id;
+    opt.textContent = `${a.name} (${a.type})`;
+    if (a.id === assetId) opt.selected = true;
+    select.appendChild(opt);
+  });
+  document.getElementById('tx-modal-title').textContent = 'İşlem Düzenle';
+  document.getElementById('tx-quantity').value = quantity;
+  document.getElementById('tx-price').value = buyPrice;
+  document.getElementById('tx-date').value = date;
+  document.getElementById('tx-notes').value = notes;
+  document.getElementById('tx-error').textContent = '';
+  document.getElementById('transaction-modal').classList.add('open');
+}
+
 function closeTransactionModal() {
   document.getElementById('transaction-modal').classList.remove('open');
+  editingTransactionId = null;
 }
 
 async function saveTransaction() {
@@ -187,8 +210,11 @@ async function saveTransaction() {
   if (!buy_price || buy_price <= 0) { document.getElementById('tx-error').textContent = 'Fiyat sıfırdan büyük olmalı.'; return; }
   if (!date) { document.getElementById('tx-error').textContent = 'Tarih seçin.'; return; }
 
-  const res = await fetch(`${API}/transactions`, {
-    method: 'POST',
+  const method = editingTransactionId ? 'PUT' : 'POST';
+  const url = editingTransactionId ? `${API}/transactions/${editingTransactionId}` : `${API}/transactions`;
+
+  const res = await fetch(url, {
+    method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ asset_id, quantity, buy_price, date, notes })
   });
@@ -198,7 +224,6 @@ async function saveTransaction() {
     document.getElementById('tx-error').textContent = err.error;
     return;
   }
-
   closeTransactionModal();
   loadTransactions();
 }

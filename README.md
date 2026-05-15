@@ -191,7 +191,7 @@ Content-Type: application/json
 ## ✅ Değerlendirme Kriterleri
 
 | Kriter | Karşılanma |
-|--------|-----------|
+|--------|-----------|s
 | CRUD Tamlığı | Assets ve Transactions için tam CRUD |
 | Kod Kalitesi | Business logic route'lardan ayrı, `services/` katmanında |
 | REST API | Standart HTTP metodları, uygun status kodları, JSON format |

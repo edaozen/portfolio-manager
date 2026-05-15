@@ -32,12 +32,10 @@
     .btn-primary { background: #38bdf8; color: #0f172a; }
     .btn-danger { background: #ef4444; color: white; }
     .btn-secondary { background: #334155; color: #e2e8f0; }
-    .btn-success { background: #22c55e; color: #0f172a; }
-    .form-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group label { font-size: 13px; color: #94a3b8; }
-    .form-group input, .form-group select, .form-group textarea { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px 12px; color: #e2e8f0; font-size: 14px; outline: none; }
+    .form-group input, .form-group select { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px 12px; color: #e2e8f0; font-size: 14px; outline: none; }
     .form-group input:focus, .form-group select:focus { border-color: #38bdf8; }
     .error { color: #ef4444; font-size: 13px; margin-top: 8px; }
     .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
@@ -49,7 +47,10 @@
     .total-card h3 { color: #94a3b8; margin-bottom: 8px; }
     .total-card .amount { font-size: 36px; font-weight: 700; color: #38bdf8; }
     .empty { text-align: center; color: #475569; padding: 48px; }
-    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .search-bar { margin-bottom: 16px; }
+    .search-bar input { width: 100%; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px 14px; color: #e2e8f0; font-size: 14px; outline: none; }
+    .search-bar input:focus { border-color: #38bdf8; }
     .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
     .modal.open { display: flex; }
     .modal-content { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 28px; width: 90%; max-width: 480px; }
@@ -72,7 +73,7 @@
 
 <main>
 
-  <!-- ÖZET SAYFASI -->
+  <!-- ÖZET -->
   <div id="page-summary" class="page active">
     <h2>Portföy Özeti</h2>
     <div id="total-card" class="total-card">
@@ -82,22 +83,25 @@
     <div id="summary-grid" class="summary-grid"></div>
   </div>
 
-  <!-- VARLIKLAR SAYFASI -->
+  <!-- VARLIKLAR -->
   <div id="page-assets" class="page">
     <div class="top-bar">
       <h2>Varlıklarım</h2>
       <button class="btn btn-primary" onclick="openAssetModal()">+ Yeni Varlık</button>
     </div>
+    <div class="search-bar">
+      <input type="text" id="asset-search" placeholder="🔍 Varlık adına göre ara..." oninput="loadAssets(this.value)">
+    </div>
     <div id="assets-list"></div>
   </div>
 
-  <!-- İŞLEMLER SAYFASI -->
+  <!-- İŞLEMLER -->
   <div id="page-transactions" class="page">
     <div class="top-bar">
       <h2>İşlemler</h2>
       <button class="btn btn-primary" onclick="openTransactionModal()">+ Yeni İşlem</button>
     </div>
-    <div style="margin-bottom:16px; display:flex; gap:8px;">
+    <div style="margin-bottom:16px;">
       <select id="filter-type" onchange="loadTransactions()" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px 12px;color:#e2e8f0;">
         <option value="">Tüm Tipler</option>
         <option value="ALTIN">Altın</option>
@@ -147,7 +151,7 @@
 <!-- İŞLEM MODAL -->
 <div id="transaction-modal" class="modal">
   <div class="modal-content">
-    <h3>Yeni İşlem Ekle</h3>
+    <h3 id="tx-modal-title">Yeni İşlem Ekle</h3>
     <div class="form-grid">
       <div class="form-group">
         <label>Varlık</label>
