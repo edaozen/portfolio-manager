@@ -68,7 +68,7 @@
 <nav>
   <button class="active" onclick="showPage('summary')">📈 Portföy Özeti</button>
   <button onclick="showPage('assets')">💎 Varlıklarım</button>
-  <button onclick="showPage('transactions')">📋 İşlemler</button>
+ <button onclick="showPage('transactions')">📋 İşlemler <span id="tx-badge" style="display:none; background:#38bdf8; color:#0f172a; border-radius:10px; padding:1px 7px; font-size:11px; font-weight:700; margin-left:4px;"></span></button>
 </nav>
 
 <main>
@@ -79,6 +79,10 @@
     <div id="total-card" class="total-card">
       <h3>Toplam Yatırım</h3>
       <div class="amount" id="total-amount">Yükleniyor...</div>
+    </div>
+   <div id="chart-container" style="display:none; gap:24px; align-items:center; justify-content:center; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:28px; margin-bottom:24px;">
+      <canvas id="portfolio-chart" width="200" height="200"></canvas>
+      <div id="chart-legend" style="min-width:180px; max-width:220px;"></div>
     </div>
     <div id="summary-grid" class="summary-grid"></div>
   </div>

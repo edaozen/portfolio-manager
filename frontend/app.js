@@ -2,6 +2,14 @@ const API = 'http://localhost:3000/api';
 let editingAssetId = null;
 let editingTransactionId = null;
 
+const TYPE_COLORS = {
+  ALTIN: '#fbbf24',
+  DOVIZ: '#4ade80',
+  KRIPTO: '#a78bfa',
+  HISSE: '#38bdf8',
+  FON: '#e879f9'
+};
+
 // ─── SAYFA YÖNETİMİ ───────────────────────────────────────
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -13,6 +21,19 @@ function showPage(name) {
   if (name === 'transactions') loadTransactions();
 }
 
+// ─── ROZET ────────────────────────────────────────────────
+async function updateBadges() {
+  const res = await fetch(`${API}/transactions`);
+  const txns = await res.json();
+  const badge = document.getElementById('tx-badge');
+  if (txns.length > 0) {
+    badge.textContent = txns.length;
+    badge.style.display = 'inline-block';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
 // ─── ÖZET ─────────────────────────────────────────────────
 async function loadSummary() {
   const res = await fetch(`${API}/portfolio/summary`);
@@ -21,10 +42,13 @@ async function loadSummary() {
   const grid = document.getElementById('summary-grid');
   grid.innerHTML = '';
   const typeLabels = { ALTIN: '🥇 Altın', DOVIZ: '💵 Döviz', KRIPTO: '🪙 Kripto', HISSE: '📈 Hisse', FON: '🏦 Fon' };
+
   for (const type in data.summary) {
     const s = data.summary[type];
+    const color = TYPE_COLORS[type] || '#94a3b8';
     const card = document.createElement('div');
     card.className = 'summary-card';
+    card.style.borderLeft = `4px solid ${color}`;
     card.innerHTML = `
       <h3>${typeLabels[type] || type}</h3>
       <div class="amount">${formatMoney(s.totalInvested)}</div>
@@ -32,9 +56,82 @@ async function loadSummary() {
     `;
     grid.appendChild(card);
   }
+
   if (Object.keys(data.summary).length === 0) {
     grid.innerHTML = '<div class="empty">Henüz işlem yok. İşlemler sekmesinden ekleyebilirsiniz.</div>';
+    document.getElementById('chart-container').style.display = 'none';
+    return;
   }
+
+  // Pasta grafiği
+
+  drawChart(data.summary, data.totalInvested);
+}
+
+function drawChart(summary, total) {
+  const container = document.getElementById('chart-container');
+  container.style.display = 'flex';
+  const canvas = document.getElementById('portfolio-chart');
+  const ctx = canvas.getContext('2d');
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const radius = 80;
+  const innerRadius = 45;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  let startAngle = -Math.PI / 2;
+  const slices = [];
+
+  for (const type in summary) {
+    const value = summary[type].totalInvested;
+    const slice = (value / total) * 2 * Math.PI;
+    slices.push({ type, value, slice, startAngle });
+    startAngle += slice;
+  }
+
+  slices.forEach(s => {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, radius, s.startAngle, s.startAngle + s.slice);
+    ctx.closePath();
+    ctx.fillStyle = TYPE_COLORS[s.type] || '#94a3b8';
+    ctx.fill();
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  });
+
+  // İç daire (donut efekti)
+  ctx.beginPath();
+  ctx.arc(cx, cy, innerRadius, 0, 2 * Math.PI);
+  ctx.fillStyle = '#1e293b';
+  ctx.fill();
+
+  // Ortada yüzde yazısı
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText('TOPLAM', cx, cy - 6);
+  ctx.fillStyle = '#f1f5f9';
+  ctx.font = 'bold 12px Segoe UI';
+  ctx.fillText(formatMoney(total).replace(' ₺', '₺'), cx, cy + 10);
+
+  // Legend
+  const legend = document.getElementById('chart-legend');
+  legend.innerHTML = '';
+  const typeLabels = { ALTIN: 'Altın', DOVIZ: 'Döviz', KRIPTO: 'Kripto', HISSE: 'Hisse', FON: 'Fon' };
+  slices.forEach(s => {
+    const pct = ((s.value / total) * 100).toFixed(1);
+    const item = document.createElement('div');
+    item.style.cssText = 'display:flex; align-items:center; gap:10px; margin-bottom:10px;';
+    item.innerHTML = `
+      <div style="width:10px;height:10px;border-radius:50%;background:${TYPE_COLORS[s.type]};flex-shrink:0"></div>
+      <span style="font-size:13px;color:#e2e8f0">${typeLabels[s.type] || s.type}</span>
+      <span style="font-size:12px;color:#64748b;margin-left:auto;padding-left:16px">${pct}%</span>
+    `;
+    legend.appendChild(item);
+  });
 }
 
 // ─── VARLIKLAR ─────────────────────────────────────────────
@@ -132,14 +229,15 @@ async function loadTransactions() {
   txns.forEach(t => {
     const card = document.createElement('div');
     card.className = 'card';
+    card.style.borderLeft = `4px solid ${TYPE_COLORS[t.asset_type] || '#334155'}`;
     card.innerHTML = `
       <div class="card-info">
         <h3>${t.asset_name} <span class="badge badge-${t.asset_type}">${t.asset_type}</span></h3>
         <p>${t.quantity} ${t.unit} · ${formatMoney(t.buy_price)} / ${t.unit} · Toplam: ${formatMoney(t.quantity * t.buy_price)}</p>
         <p style="margin-top:6px; font-size:13px">
-  <span style="color:#94a3b8">${t.date}</span>
-  ${t.notes ? `<span style="background:#1e3a5f; color:#38bdf8; padding:2px 8px; border-radius:6px; margin-left:8px; font-size:12px">📌 ${t.notes}</span>` : ''}
-</p>
+          <span style="color:#94a3b8">${formatDate(t.date)}</span>
+          ${t.notes ? `<span style="background:#1e3a5f; color:#38bdf8; padding:2px 8px; border-radius:6px; margin-left:8px; font-size:12px">📌 ${t.notes}</span>` : ''}
+        </p>
       </div>
       <div class="card-actions">
         <button class="btn btn-secondary" onclick="openTransactionEditModal(${t.id}, ${t.asset_id}, ${t.quantity}, ${t.buy_price}, '${t.date}', '${t.notes || ''}')">Düzenle</button>
@@ -148,6 +246,7 @@ async function loadTransactions() {
     `;
     list.appendChild(card);
   });
+  updateBadges();
 }
 
 async function openTransactionModal() {
@@ -229,12 +328,14 @@ async function saveTransaction() {
   }
   closeTransactionModal();
   loadTransactions();
+  updateBadges();
 }
 
 async function deleteTransaction(id) {
   if (!confirm('Bu işlemi silmek istediğinize emin misiniz?')) return;
   await fetch(`${API}/transactions/${id}`, { method: 'DELETE' });
   loadTransactions();
+  updateBadges();
 }
 
 // ─── YARDIMCI ─────────────────────────────────────────────
@@ -242,5 +343,12 @@ function formatMoney(amount) {
   return Number(amount).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
 }
 
+function formatDate(dateStr) {
+  const months = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  const [y, m, d] = dateStr.split('-');
+  return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+}
+
 // ─── BAŞLANGIÇ ────────────────────────────────────────────
 loadSummary();
+updateBadges();
