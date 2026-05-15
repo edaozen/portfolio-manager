@@ -136,7 +136,10 @@ async function loadTransactions() {
       <div class="card-info">
         <h3>${t.asset_name} <span class="badge badge-${t.asset_type}">${t.asset_type}</span></h3>
         <p>${t.quantity} ${t.unit} · ${formatMoney(t.buy_price)} / ${t.unit} · Toplam: ${formatMoney(t.quantity * t.buy_price)}</p>
-        <p style="margin-top:4px; color:#475569">${t.date}${t.notes ? ' · ' + t.notes : ''}</p>
+        <p style="margin-top:6px; font-size:13px">
+  <span style="color:#94a3b8">${t.date}</span>
+  ${t.notes ? `<span style="background:#1e3a5f; color:#38bdf8; padding:2px 8px; border-radius:6px; margin-left:8px; font-size:12px">📌 ${t.notes}</span>` : ''}
+</p>
       </div>
       <div class="card-actions">
         <button class="btn btn-secondary" onclick="openTransactionEditModal(${t.id}, ${t.asset_id}, ${t.quantity}, ${t.buy_price}, '${t.date}', '${t.notes || ''}')">Düzenle</button>
