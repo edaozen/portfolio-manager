@@ -46,13 +46,19 @@ async function loadSummary() {
   for (const type in data.summary) {
     const s = data.summary[type];
     const color = TYPE_COLORS[type] || '#94a3b8';
-    const card = document.createElement('div');
+  const card = document.createElement('div');
     card.className = 'summary-card';
     card.style.borderLeft = `4px solid ${color}`;
+    card.style.cursor = 'pointer';
+    card.style.transition = 'transform 0.15s, box-shadow 0.15s';
+    card.onmouseenter = () => { card.style.transform = 'translateY(-2px)'; card.style.boxShadow = `0 4px 20px ${color}33`; };
+    card.onmouseleave = () => { card.style.transform = ''; card.style.boxShadow = ''; };
+    card.onclick = () => showTransactionsByType(type);
     card.innerHTML = `
       <h3>${typeLabels[type] || type}</h3>
       <div class="amount">${formatMoney(s.totalInvested)}</div>
       <div class="sub">${s.transactionCount} işlem · Ort. maliyet: ${formatMoney(s.averageCost)}</div>
+      <div style="margin-top:8px; font-size:11px; color:#475569">👆 İşlemleri görmek için tıkla</div>
     `;
     grid.appendChild(card);
   }
@@ -342,7 +348,45 @@ async function deleteTransaction(id) {
 function formatMoney(amount) {
   return Number(amount).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
 }
+// ─── TİPE GÖRE İŞLEM DETAY MODALI ────────────────────────
+async function showTransactionsByType(type) {
+  const res = await fetch(`${API}/transactions?type=${type}`);
+  const txns = await res.json();
+  const typeLabels = { ALTIN: '🥇 Altın', DOVIZ: '💵 Döviz', KRIPTO: '🪙 Kripto', HISSE: '📈 Hisse', FON: '🏦 Fon' };
+  const color = TYPE_COLORS[type] || '#94a3b8';
 
+  const modal = document.getElementById('detail-modal');
+  const title = document.getElementById('detail-modal-title');
+  const list = document.getElementById('detail-modal-list');
+
+  title.textContent = `${typeLabels[type]} İşlemleri`;
+  title.style.color = color;
+  list.innerHTML = '';
+
+  txns.forEach(t => {
+    const item = document.createElement('div');
+    item.style.cssText = `background:#0f172a; border:1px solid #334155; border-left: 3px solid ${color}; border-radius:8px; padding:14px; margin-bottom:10px;`;
+    item.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-weight:600; color:#f1f5f9">${t.asset_name}</span>
+        <span style="color:${color}; font-weight:700">${formatMoney(t.quantity * t.buy_price)}</span>
+      </div>
+      <div style="font-size:12px; color:#64748b; margin-top:6px">
+        ${t.quantity} ${t.unit} · ${formatMoney(t.buy_price)} / ${t.unit}
+      </div>
+      <div style="font-size:12px; color:#475569; margin-top:4px">
+        ${formatDate(t.date)} ${t.notes ? `· <span style="color:#38bdf8">📌 ${t.notes}</span>` : ''}
+      </div>
+    `;
+    list.appendChild(item);
+  });
+
+  modal.classList.add('open');
+}
+
+function closeDetailModal() {
+  document.getElementById('detail-modal').classList.remove('open');
+}
 function formatDate(dateStr) {
   const months = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
   const [y, m, d] = dateStr.split('-');
