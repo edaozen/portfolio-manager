@@ -1,75 +1,142 @@
-📊 Portföy Yöneticisi
+# 📊 Portföy Yöneticisi
+
 Kişisel yatırım portföyünüzü takip edebileceğiniz full-stack web uygulaması. Altın, döviz, kripto, hisse senedi ve fon işlemlerinizi kayıt altına alın, toplam yatırım tutarınızı ve ortalama maliyetlerinizi görün.
-🛠️ Teknolojiler
 
-Frontend: Vanilla JavaScript (SPA)
-Backend: Node.js + Express
-Veritabanı: SQLite (better-sqlite3)
-API Dökümantasyon: Swagger UI
-Test: Jest
+---
 
-📁 Proje Yapısı
+## 🛠️ Teknolojiler
+
+| Katman | Teknoloji |
+|--------|-----------|
+| Frontend | Vanilla JavaScript (SPA) |
+| Backend | Node.js + Express |
+| Veritabanı | SQLite (better-sqlite3) |
+| API Dökümantasyon | Swagger UI |
+| Test | Jest |
+
+---
+
+## 📁 Proje Yapısı
+
+```
 portfolio-manager/
 ├── backend/
 │   ├── src/
 │   │   ├── models/
-│   │   │   └── db.js                    # Veritabanı bağlantısı ve tablo oluşturma
+│   │   │   └── db.js                 # Veritabanı bağlantısı ve tablo oluşturma
 │   │   ├── routes/
-│   │   │   ├── assets.js                # Varlık endpoint'leri
-│   │   │   └── transactions.js          # İşlem endpoint'leri
+│   │   │   ├── assets.js             # Varlık endpoint'leri
+│   │   │   └── transactions.js       # İşlem endpoint'leri
 │   │   ├── services/
-│   │   │   ├── assetService.js          # Varlık business logic
-│   │   │   └── transactionService.js    # İşlem business logic
-│   │   └── app.js                       # Ana uygulama
+│   │   │   ├── assetService.js       # Varlık business logic
+│   │   │   └── transactionService.js # İşlem business logic
+│   │   └── app.js                    # Ana uygulama
 │   ├── tests/
 │   │   └── transactionService.test.js
 │   └── package.json
 └── frontend/
     ├── index.html
     └── app.js
-🚀 Kurulum ve Çalıştırma
-Gereksinimler
+```
 
-Node.js v18 veya üzeri
+---
 
-Adımlar
+## 🚀 Kurulum ve Çalıştırma
 
-Repoyu klonlayın:
+### Gereksinimler
 
-bashgit clone https://github.com/KULLANICI_ADI/portfolio-manager.git
+- Node.js v18 veya üzeri
+
+### Adımlar
+
+**1. Repoyu klonlayın:**
+
+```bash
+git clone https://github.com/edaozen/portfolio-manager.git
 cd portfolio-manager
+```
 
-Bağımlılıkları yükleyin:
+**2. Bağımlılıkları yükleyin:**
 
-bashcd backend
+```bash
+cd backend
 npm install
+```
 
-Sunucuyu başlatın:
+**3. Sunucuyu başlatın:**
 
-bashnpm start
+```bash
+npm start
+```
 
-Tarayıcıda açın:
+**4. Tarayıcıda açın:**
 
+```
 http://localhost:3000
-🧪 Testleri Çalıştırma
-bashcd backend
+```
+
+---
+
+## 🧪 Testleri Çalıştırma
+
+```bash
+cd backend
 npm test
-Çıktı:
+```
+
+Beklenen çıktı:
+
+```
 Tests: 9 passed, 9 total
-📡 API Kullanımı
-Swagger UI
+```
+
+---
+
+## 📡 API Kullanımı
+
+### Swagger UI
+
 Tüm endpoint'leri interaktif olarak test etmek için:
+
+```
 http://localhost:3000/api-docs
-Endpoint'ler
-Varlıklar
-MethodURLAçıklamaGET/api/assetsTüm varlıkları listeleGET/api/assets/:idTek varlık getirPOST/api/assetsYeni varlık oluşturPUT/api/assets/:idVarlık güncelleDELETE/api/assets/:idVarlık sil
-İşlemler
-MethodURLAçıklamaGET/api/transactionsTüm işlemleri listeleGET/api/transactions?type=ALTINTipe göre filtreleGET/api/transactions?asset_id=1Varlığa göre filtrelePOST/api/transactionsYeni işlem eklePUT/api/transactions/:idİşlem güncelleDELETE/api/transactions/:idİşlem sil
-Portföy
-MethodURLAçıklamaGET/api/portfolio/summaryToplam portföy özeti
-Örnek İstekler
-Yeni varlık oluştur:
-bashPOST /api/assets
+```
+
+### Varlıklar (Assets)
+
+| Method | URL | Açıklama |
+|--------|-----|----------|
+| GET | `/api/assets` | Tüm varlıkları listele |
+| GET | `/api/assets/:id` | Tek varlık getir |
+| POST | `/api/assets` | Yeni varlık oluştur |
+| PUT | `/api/assets/:id` | Varlık güncelle |
+| DELETE | `/api/assets/:id` | Varlık sil |
+
+### İşlemler (Transactions)
+
+| Method | URL | Açıklama |
+|--------|-----|----------|
+| GET | `/api/transactions` | Tüm işlemleri listele |
+| GET | `/api/transactions?type=ALTIN` | Tipe göre filtrele |
+| GET | `/api/transactions?asset_id=1` | Varlığa göre filtrele |
+| POST | `/api/transactions` | Yeni işlem ekle |
+| PUT | `/api/transactions/:id` | İşlem güncelle |
+| DELETE | `/api/transactions/:id` | İşlem sil |
+
+### Portföy
+
+| Method | URL | Açıklama |
+|--------|-----|----------|
+| GET | `/api/portfolio/summary` | Toplam portföy özeti |
+
+---
+
+## 📝 Örnek İstekler
+
+**Yeni varlık oluştur:**
+
+```json
+POST /api/assets
 Content-Type: application/json
 
 {
@@ -77,8 +144,12 @@ Content-Type: application/json
   "type": "ALTIN",
   "unit": "gram"
 }
-Yeni işlem ekle:
-bashPOST /api/transactions
+```
+
+**Yeni işlem ekle:**
+
+```json
+POST /api/transactions
 Content-Type: application/json
 
 {
@@ -88,16 +159,42 @@ Content-Type: application/json
   "date": "2026-05-15",
   "notes": "Maaştan aldım"
 }
-🗄️ Veritabanı Modeli
-Assets (Varlıklar)
-AlanTipAçıklamaidINTEGERPrimary keynameTEXTVarlık adıtypeTEXTALTIN/DOVIZ/KRIPTO/HISSE/FONunitTEXTBirim (gram, adet vb.)created_atTEXTOluşturma tarihi
-Transactions (İşlemler)
-AlanTipAçıklamaidINTEGERPrimary keyasset_idINTEGERForeign key → AssetsquantityREALMiktarbuy_priceREALAlış fiyatı (TL)dateTEXTİşlem tarihinotesTEXTOpsiyonel not
-✅ Değerlendirme Kriterleri Karşılama
+```
 
-CRUD: Assets ve Transactions için tam CRUD
-Kod Kalitesi: Business logic route'lardan ayrı, services/ katmanında
-REST API: Standart HTTP metodları, uygun status kodları, JSON format
-Swagger: Tüm endpoint'ler belgelenmiş, /api-docs adresinde
-Test: 9 unit test, Jest ile
-Versiyon Kontrol: Git + GitHub
+---
+
+## 🗄️ Veritabanı Modeli
+
+### Assets (Varlıklar)
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| id | INTEGER | Primary key |
+| name | TEXT | Varlık adı |
+| type | TEXT | ALTIN / DOVIZ / KRIPTO / HISSE / FON |
+| unit | TEXT | Birim (gram, adet vb.) |
+| created_at | TEXT | Oluşturma tarihi |
+
+### Transactions (İşlemler)
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| id | INTEGER | Primary key |
+| asset_id | INTEGER | Foreign key → Assets |
+| quantity | REAL | Miktar |
+| buy_price | REAL | Alış fiyatı (TL) |
+| date | TEXT | İşlem tarihi |
+| notes | TEXT | Opsiyonel not |
+
+---
+
+## ✅ Değerlendirme Kriterleri
+
+| Kriter | Karşılanma |
+|--------|-----------|
+| CRUD Tamlığı | Assets ve Transactions için tam CRUD |
+| Kod Kalitesi | Business logic route'lardan ayrı, `services/` katmanında |
+| REST API | Standart HTTP metodları, uygun status kodları, JSON format |
+| Swagger | Tüm endpoint'ler belgelenmiş, `/api-docs` adresinde |
+| Test | 9 unit test, Jest ile — `npm test` |
+| Versiyon Kontrol | Git + GitHub |
