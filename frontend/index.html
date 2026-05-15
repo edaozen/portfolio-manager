@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portföy Yöneticisi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+    header { background: #1e293b; padding: 20px 40px; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 12px; }
+    header h1 { font-size: 22px; color: #f8fafc; }
+    header span { font-size: 24px; }
+    nav { background: #1e293b; padding: 0 40px; display: flex; gap: 4px; border-bottom: 1px solid #334155; }
+    nav button { padding: 14px 20px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 14px; border-bottom: 3px solid transparent; transition: all 0.2s; }
+    nav button.active, nav button:hover { color: #38bdf8; border-bottom-color: #38bdf8; }
+    main { padding: 32px 40px; max-width: 1100px; margin: 0 auto; }
+    .page { display: none; }
+    .page.active { display: block; }
+    h2 { font-size: 20px; margin-bottom: 24px; color: #f1f5f9; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .card-info h3 { font-size: 16px; color: #f1f5f9; margin-bottom: 4px; }
+    .card-info p { font-size: 13px; color: #64748b; }
+    .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-ALTIN { background: #422006; color: #fbbf24; }
+    .badge-DOVIZ { background: #052e16; color: #4ade80; }
+    .badge-KRIPTO { background: #1e1b4b; color: #a78bfa; }
+    .badge-HISSE { background: #0c1a2e; color: #38bdf8; }
+    .badge-FON { background: #2d1b69; color: #e879f9; }
+    .card-actions { display: flex; gap: 8px; }
+    .btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #38bdf8; color: #0f172a; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-secondary { background: #334155; color: #e2e8f0; }
+    .btn-success { background: #22c55e; color: #0f172a; }
+    .form-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 13px; color: #94a3b8; }
+    .form-group input, .form-group select, .form-group textarea { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px 12px; color: #e2e8f0; font-size: 14px; outline: none; }
+    .form-group input:focus, .form-group select:focus { border-color: #38bdf8; }
+    .error { color: #ef4444; font-size: 13px; margin-top: 8px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .summary-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+    .summary-card h3 { font-size: 13px; color: #64748b; margin-bottom: 8px; }
+    .summary-card .amount { font-size: 24px; font-weight: 700; color: #f1f5f9; }
+    .summary-card .sub { font-size: 12px; color: #64748b; margin-top: 4px; }
+    .total-card { background: linear-gradient(135deg, #1e3a5f, #1e293b); border: 1px solid #38bdf8; border-radius: 12px; padding: 24px; margin-bottom: 24px; text-align: center; }
+    .total-card h3 { color: #94a3b8; margin-bottom: 8px; }
+    .total-card .amount { font-size: 36px; font-weight: 700; color: #38bdf8; }
+    .empty { text-align: center; color: #475569; padding: 48px; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+    .modal.open { display: flex; }
+    .modal-content { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 28px; width: 90%; max-width: 480px; }
+    .modal-content h3 { margin-bottom: 20px; color: #f1f5f9; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span>📊</span>
+  <h1>Portföy Yöneticisi</h1>
+</header>
+
+<nav>
+  <button class="active" onclick="showPage('summary')">📈 Portföy Özeti</button>
+  <button onclick="showPage('assets')">💎 Varlıklarım</button>
+  <button onclick="showPage('transactions')">📋 İşlemler</button>
+</nav>
+
+<main>
+
+  <!-- ÖZET SAYFASI -->
+  <div id="page-summary" class="page active">
+    <h2>Portföy Özeti</h2>
+    <div id="total-card" class="total-card">
+      <h3>Toplam Yatırım</h3>
+      <div class="amount" id="total-amount">Yükleniyor...</div>
+    </div>
+    <div id="summary-grid" class="summary-grid"></div>
+  </div>
+
+  <!-- VARLIKLAR SAYFASI -->
+  <div id="page-assets" class="page">
+    <div class="top-bar">
+      <h2>Varlıklarım</h2>
+      <button class="btn btn-primary" onclick="openAssetModal()">+ Yeni Varlık</button>
+    </div>
+    <div id="assets-list"></div>
+  </div>
+
+  <!-- İŞLEMLER SAYFASI -->
+  <div id="page-transactions" class="page">
+    <div class="top-bar">
+      <h2>İşlemler</h2>
+      <button class="btn btn-primary" onclick="openTransactionModal()">+ Yeni İşlem</button>
+    </div>
+    <div style="margin-bottom:16px; display:flex; gap:8px;">
+      <select id="filter-type" onchange="loadTransactions()" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px 12px;color:#e2e8f0;">
+        <option value="">Tüm Tipler</option>
+        <option value="ALTIN">Altın</option>
+        <option value="DOVIZ">Döviz</option>
+        <option value="KRIPTO">Kripto</option>
+        <option value="HISSE">Hisse</option>
+        <option value="FON">Fon</option>
+      </select>
+    </div>
+    <div id="transactions-list"></div>
+  </div>
+
+</main>
+
+<!-- VARLIK MODAL -->
+<div id="asset-modal" class="modal">
+  <div class="modal-content">
+    <h3 id="asset-modal-title">Yeni Varlık Ekle</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Varlık Adı</label>
+        <input id="asset-name" type="text" placeholder="Gram Altın">
+      </div>
+      <div class="form-group">
+        <label>Tip</label>
+        <select id="asset-type">
+          <option value="ALTIN">Altın</option>
+          <option value="DOVIZ">Döviz</option>
+          <option value="KRIPTO">Kripto</option>
+          <option value="HISSE">Hisse</option>
+          <option value="FON">Fon</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Birim</label>
+        <input id="asset-unit" type="text" placeholder="gram / adet / lot">
+      </div>
+    </div>
+    <div id="asset-error" class="error"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeAssetModal()">İptal</button>
+      <button class="btn btn-primary" onclick="saveAsset()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- İŞLEM MODAL -->
+<div id="transaction-modal" class="modal">
+  <div class="modal-content">
+    <h3>Yeni İşlem Ekle</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Varlık</label>
+        <select id="tx-asset"></select>
+      </div>
+      <div class="form-group">
+        <label>Miktar</label>
+        <input id="tx-quantity" type="number" step="any" placeholder="5">
+      </div>
+      <div class="form-group">
+        <label>Alış Fiyatı (TL)</label>
+        <input id="tx-price" type="number" step="any" placeholder="4250">
+      </div>
+      <div class="form-group">
+        <label>Tarih</label>
+        <input id="tx-date" type="date">
+      </div>
+      <div class="form-group" style="grid-column: 1/-1">
+        <label>Not (opsiyonel)</label>
+        <input id="tx-notes" type="text" placeholder="Maaştan aldım">
+      </div>
+    </div>
+    <div id="tx-error" class="error"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeTransactionModal()">İptal</button>
+      <button class="btn btn-primary" onclick="saveTransaction()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
