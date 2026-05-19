@@ -117,7 +117,7 @@ Tests: 14 passed, 14 total
 
 ---
 
-## 📡 API Kullanımı
+## API Kullanımı
 
 Swagger UI: `http://localhost:3000/api-docs`
 
