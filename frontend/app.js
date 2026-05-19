@@ -247,11 +247,6 @@ function drawBarChart(canvasId, summary) {
   const barW = Math.min(36, chartW / types.length - 12);
   const halfH = chartH / 2 - 6;
 
-  ctx.fillStyle = '#94a3b8';
-  ctx.font = '9px Segoe UI';
-  ctx.textAlign = 'center';
-  ctx.fillText('KAR / ZARAR', canvas.width / 2, 12);
-
   ctx.strokeStyle = '#475569';
   ctx.lineWidth = 1;
   ctx.beginPath();
