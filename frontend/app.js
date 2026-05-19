@@ -276,7 +276,7 @@ function drawBarChart(canvasId, summary) {
       ctx.font = 'bold 8px Segoe UI';
       ctx.textAlign = 'center';
       const label = (profit >= 0 ? '+' : '') + 
-        (Math.abs(profit) >= 1000 ? Math.round(profit / 1000) + 'K' : Math.round(profit) + '');
+  (Math.abs(profit) >= 1000 ? (profit / 1000).toFixed(1) + 'K' : Math.round(profit) + '');
       ctx.fillText(label, x + barW / 2, profit >= 0 ? y - 4 : y + barH + 10);
     }
 
