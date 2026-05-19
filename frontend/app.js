@@ -526,6 +526,21 @@ async function saveTransaction() {
       return;
     }
   }
+  if (transaction_type === 'ALIS' && editingTransactionId) {
+    const assetsRes = await fetch(`${API}/transactions?asset_id=${asset_id}`, { headers: authHeaders() });
+    const assetTxns = await assetsRes.json();
+    const toplamSatis = assetTxns
+      .filter(t => t.transaction_type === 'SATIS')
+      .reduce((sum, t) => sum + t.quantity, 0);
+    const digerAlislar = assetTxns
+      .filter(t => t.transaction_type === 'ALIS' && t.id !== editingTransactionId)
+      .reduce((sum, t) => sum + t.quantity, 0);
+    const yeniToplamAlis = digerAlislar + quantity;
+    if (yeniToplamAlis < toplamSatis) {
+      document.getElementById('tx-error').textContent = `Bu alış miktarı toplam satıştan az olamaz. Minimum: ${toplamSatis - digerAlislar}`;
+      return;
+    }
+  }
 
   const method = editingTransactionId ? 'PUT' : 'POST';
   const url = editingTransactionId ? `${API}/transactions/${editingTransactionId}` : `${API}/transactions`;
