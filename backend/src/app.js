@@ -1,20 +1,22 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 
+const authRouter = require('./routes/auth');
 const assetsRouter = require('./routes/assets');
 const transactionsRouter = require('./routes/transactions');
 const transactionService = require('./services/transactionService');
+const { authMiddleware } = require('./middleware');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-const path = require('path');
 app.use(express.static(path.join(__dirname, '../../frontend')));
 
-// Swagger ayarları
+// Swagger
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
@@ -23,6 +25,16 @@ const swaggerOptions = {
       version: '1.0.0',
       description: 'Kişisel Yatırım Portföy Yöneticisi API',
     },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        }
+      }
+    },
+    security: [{ bearerAuth: [] }]
   },
   apis: ['./src/routes/*.js'],
 };
@@ -31,12 +43,13 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Route'lar
+app.use('/api/auth', authRouter);
 app.use('/api/assets', assetsRouter);
 app.use('/api/transactions', transactionsRouter);
 
-// Portföy özeti endpoint'i
-app.get('/api/portfolio/summary', (req, res) => {
-  const transactions = transactionService.getAllTransactions();
+// Portföy özeti
+app.get('/api/portfolio/summary', authMiddleware, (req, res) => {
+  const transactions = transactionService.getAllTransactions(req.user.id);
   const grouped = transactionService.groupByAssetType(transactions);
   const summary = {};
 
@@ -50,8 +63,16 @@ app.get('/api/portfolio/summary', (req, res) => {
   }
 
   const totalInvested = transactionService.calculateTotalInvested(transactions);
-
   res.json({ summary, totalInvested });
+});
+
+// Login/Register sayfaları
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../frontend/login.html'));
+});
+
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../frontend/register.html'));
 });
 
 const PORT = 3000;

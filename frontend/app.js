@@ -2,6 +2,23 @@ const API = 'http://localhost:3000/api';
 let editingAssetId = null;
 let editingTransactionId = null;
 
+const token = localStorage.getItem('token');
+const username = localStorage.getItem('username');
+if (!token) window.location.href = '/login';
+
+function authHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  };
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('username');
+  window.location.href = '/login';
+}
+
 const TYPE_COLORS = {
   ALTIN: '#fbbf24',
   DOVIZ: '#4ade80',
@@ -10,7 +27,6 @@ const TYPE_COLORS = {
   FON: '#e879f9'
 };
 
-// ─── SAYFA YÖNETİMİ ───────────────────────────────────────
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
@@ -21,9 +37,8 @@ function showPage(name) {
   if (name === 'transactions') loadTransactions();
 }
 
-// ─── ROZET ────────────────────────────────────────────────
 async function updateBadges() {
-  const res = await fetch(`${API}/transactions`);
+  const res = await fetch(`${API}/transactions`, { headers: authHeaders() });
   const txns = await res.json();
   const badge = document.getElementById('tx-badge');
   if (txns.length > 0) {
@@ -34,9 +49,9 @@ async function updateBadges() {
   }
 }
 
-// ─── ÖZET ─────────────────────────────────────────────────
 async function loadSummary() {
-  const res = await fetch(`${API}/portfolio/summary`);
+  document.getElementById('header-username').textContent = `👤 ${username}`;
+  const res = await fetch(`${API}/portfolio/summary`, { headers: authHeaders() });
   const data = await res.json();
   document.getElementById('total-amount').textContent = formatMoney(data.totalInvested);
   const grid = document.getElementById('summary-grid');
@@ -46,7 +61,7 @@ async function loadSummary() {
   for (const type in data.summary) {
     const s = data.summary[type];
     const color = TYPE_COLORS[type] || '#94a3b8';
-  const card = document.createElement('div');
+    const card = document.createElement('div');
     card.className = 'summary-card';
     card.style.borderLeft = `4px solid ${color}`;
     card.style.cursor = 'pointer';
@@ -68,8 +83,6 @@ async function loadSummary() {
     document.getElementById('chart-container').style.display = 'none';
     return;
   }
-
-  // Pasta grafiği
 
   drawChart(data.summary, data.totalInvested);
 }
@@ -108,13 +121,11 @@ function drawChart(summary, total) {
     ctx.stroke();
   });
 
-  // İç daire (donut efekti)
   ctx.beginPath();
   ctx.arc(cx, cy, innerRadius, 0, 2 * Math.PI);
   ctx.fillStyle = '#1e293b';
   ctx.fill();
 
-  // Ortada yüzde yazısı
   ctx.fillStyle = '#94a3b8';
   ctx.font = '11px Segoe UI';
   ctx.textAlign = 'center';
@@ -123,7 +134,6 @@ function drawChart(summary, total) {
   ctx.font = 'bold 12px Segoe UI';
   ctx.fillText(formatMoney(total).replace(' ₺', '₺'), cx, cy + 10);
 
-  // Legend
   const legend = document.getElementById('chart-legend');
   legend.innerHTML = '';
   const typeLabels = { ALTIN: 'Altın', DOVIZ: 'Döviz', KRIPTO: 'Kripto', HISSE: 'Hisse', FON: 'Fon' };
@@ -140,9 +150,8 @@ function drawChart(summary, total) {
   });
 }
 
-// ─── VARLIKLAR ─────────────────────────────────────────────
 async function loadAssets(searchTerm = '') {
-  const res = await fetch(`${API}/assets`);
+  const res = await fetch(`${API}/assets`, { headers: authHeaders() });
   let assets = await res.json();
   if (searchTerm) {
     assets = assets.filter(a => a.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -197,7 +206,7 @@ async function saveAsset() {
   const url = editingAssetId ? `${API}/assets/${editingAssetId}` : `${API}/assets`;
   const res = await fetch(url, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(),
     body: JSON.stringify({ name, type, unit })
   });
   if (!res.ok) {
@@ -211,7 +220,7 @@ async function saveAsset() {
 
 async function deleteAsset(id) {
   if (!confirm('Bu varlığı silmek istediğinize emin misiniz?')) return;
-  const res = await fetch(`${API}/assets/${id}`, { method: 'DELETE' });
+  const res = await fetch(`${API}/assets/${id}`, { method: 'DELETE', headers: authHeaders() });
   if (!res.ok) {
     const err = await res.json();
     alert(err.error);
@@ -220,11 +229,10 @@ async function deleteAsset(id) {
   loadAssets();
 }
 
-// ─── İŞLEMLER ─────────────────────────────────────────────
 async function loadTransactions() {
   const type = document.getElementById('filter-type')?.value || '';
   const url = type ? `${API}/transactions?type=${type}` : `${API}/transactions`;
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: authHeaders() });
   const txns = await res.json();
   const list = document.getElementById('transactions-list');
   list.innerHTML = '';
@@ -257,7 +265,7 @@ async function loadTransactions() {
 
 async function openTransactionModal() {
   editingTransactionId = null;
-  const res = await fetch(`${API}/assets`);
+  const res = await fetch(`${API}/assets`, { headers: authHeaders() });
   const assets = await res.json();
   const select = document.getElementById('tx-asset');
   select.innerHTML = '';
@@ -282,7 +290,7 @@ async function openTransactionModal() {
 
 async function openTransactionEditModal(id, assetId, quantity, buyPrice, date, notes) {
   editingTransactionId = id;
-  const res = await fetch(`${API}/assets`);
+  const res = await fetch(`${API}/assets`, { headers: authHeaders() });
   const assets = await res.json();
   const select = document.getElementById('tx-asset');
   select.innerHTML = '';
@@ -323,7 +331,7 @@ async function saveTransaction() {
 
   const res = await fetch(url, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(),
     body: JSON.stringify({ asset_id, quantity, buy_price, date, notes })
   });
 
@@ -339,18 +347,13 @@ async function saveTransaction() {
 
 async function deleteTransaction(id) {
   if (!confirm('Bu işlemi silmek istediğinize emin misiniz?')) return;
-  await fetch(`${API}/transactions/${id}`, { method: 'DELETE' });
+  await fetch(`${API}/transactions/${id}`, { method: 'DELETE', headers: authHeaders() });
   loadTransactions();
   updateBadges();
 }
 
-// ─── YARDIMCI ─────────────────────────────────────────────
-function formatMoney(amount) {
-  return Number(amount).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
-}
-// ─── TİPE GÖRE İŞLEM DETAY MODALI ────────────────────────
 async function showTransactionsByType(type) {
-  const res = await fetch(`${API}/transactions?type=${type}`);
+  const res = await fetch(`${API}/transactions?type=${type}`, { headers: authHeaders() });
   const txns = await res.json();
   const typeLabels = { ALTIN: '🥇 Altın', DOVIZ: '💵 Döviz', KRIPTO: '🪙 Kripto', HISSE: '📈 Hisse', FON: '🏦 Fon' };
   const color = TYPE_COLORS[type] || '#94a3b8';
@@ -387,12 +390,16 @@ async function showTransactionsByType(type) {
 function closeDetailModal() {
   document.getElementById('detail-modal').classList.remove('open');
 }
+
+function formatMoney(amount) {
+  return Number(amount).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
+}
+
 function formatDate(dateStr) {
   const months = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
   const [y, m, d] = dateStr.split('-');
   return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
 }
 
-// ─── BAŞLANGIÇ ────────────────────────────────────────────
 loadSummary();
 updateBadges();
