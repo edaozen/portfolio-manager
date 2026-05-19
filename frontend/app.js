@@ -16,6 +16,7 @@ function authHeaders() {
 function logout() {
   localStorage.removeItem('token');
   localStorage.removeItem('username');
+  localStorage.removeItem('currentPage');
   window.location.href = '/login';
 }
 
@@ -27,14 +28,43 @@ const TYPE_COLORS = {
   FON: '#e879f9'
 };
 
+let currentPage = localStorage.getItem('currentPage') || 'summary';
+
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   event.target.classList.add('active');
+  currentPage = name;
+  localStorage.setItem('currentPage', name);
   if (name === 'summary') loadSummary();
   if (name === 'assets') loadAssets();
   if (name === 'transactions') loadTransactions();
+}
+
+function refreshCurrentPage() {
+  if (currentPage === 'summary') loadSummary();
+  if (currentPage === 'assets') loadAssets();
+  if (currentPage === 'transactions') loadTransactions();
+  updateBadges();
+}
+
+function initPage() {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + currentPage).classList.add('active');
+
+  const navButtons = document.querySelectorAll('nav button');
+  navButtons.forEach(b => {
+    if (currentPage === 'summary' && b.textContent.includes('Özet')) b.classList.add('active');
+    if (currentPage === 'assets' && b.textContent.includes('Varlık')) b.classList.add('active');
+    if (currentPage === 'transactions' && b.textContent.includes('İşlem')) b.classList.add('active');
+  });
+
+  if (currentPage === 'summary') loadSummary();
+  if (currentPage === 'assets') loadAssets();
+  if (currentPage === 'transactions') loadTransactions();
+  updateBadges();
 }
 
 async function updateBadges() {
@@ -215,7 +245,7 @@ async function saveAsset() {
     return;
   }
   closeAssetModal();
-  loadAssets();
+  refreshCurrentPage();
 }
 
 async function deleteAsset(id) {
@@ -226,7 +256,7 @@ async function deleteAsset(id) {
     alert(err.error);
     return;
   }
-  loadAssets();
+  refreshCurrentPage();
 }
 
 async function loadTransactions() {
@@ -341,15 +371,13 @@ async function saveTransaction() {
     return;
   }
   closeTransactionModal();
-  loadTransactions();
-  updateBadges();
+  refreshCurrentPage();
 }
 
 async function deleteTransaction(id) {
   if (!confirm('Bu işlemi silmek istediğinize emin misiniz?')) return;
   await fetch(`${API}/transactions/${id}`, { method: 'DELETE', headers: authHeaders() });
-  loadTransactions();
-  updateBadges();
+  refreshCurrentPage();
 }
 
 async function showTransactionsByType(type) {
@@ -401,5 +429,4 @@ function formatDate(dateStr) {
   return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
 }
 
-loadSummary();
-updateBadges();
+initPage();

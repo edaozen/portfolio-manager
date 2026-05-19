@@ -1,47 +1,54 @@
 # 📊 Portföy Yöneticisi
 
-Kişisel yatırım portföyünüzü takip edebileceğiniz full-stack web uygulaması. Altın, döviz, kripto, hisse senedi ve fon işlemlerinizi kayıt altına alın, toplam yatırım tutarınızı ve ortalama maliyetlerinizi görün.
+ Portföy Yöneticisi, kişisel yatırım portföyünüzü takip edebileceğiniz full-stack web uygulamasıdır. Kullanıcı kaydı ve girişi ile her kullanıcı kendi verilerini yönetir. Altın, döviz, kripto, hisse senedi ve fon işlemlerinizi kayıt altına alır, toplam yatırım tutarınızı ve ortalama maliyetlerinizi görür.
 
 ---
 
-## 🛠️ Teknolojiler
+## Teknolojiler
 
 | Katman | Teknoloji |
 |--------|-----------|
 | Frontend | Vanilla JavaScript (SPA) |
 | Backend | Node.js + Express |
 | Veritabanı | SQLite (better-sqlite3) |
+| Kimlik Doğrulama | JWT (jsonwebtoken + bcryptjs) |
 | API Dökümantasyon | Swagger UI |
 | Test | Jest |
 
 ---
 
-## 📁 Proje Yapısı
+## Proje Yapısı
 
 ```
 portfolio-manager/
 ├── backend/
 │   ├── src/
 │   │   ├── models/
-│   │   │   └── db.js                 # Veritabanı bağlantısı ve tablo oluşturma
+│   │   │   └── db.js                 # Veritabanı ve tablo oluşturma
 │   │   ├── routes/
+│   │   │   ├── auth.js               # Register/Login endpoint'leri
 │   │   │   ├── assets.js             # Varlık endpoint'leri
 │   │   │   └── transactions.js       # İşlem endpoint'leri
 │   │   ├── services/
+│   │   │   ├── authService.js        # JWT business logic
 │   │   │   ├── assetService.js       # Varlık business logic
 │   │   │   └── transactionService.js # İşlem business logic
+│   │   ├── middleware.js             # JWT doğrulama middleware
 │   │   └── app.js                    # Ana uygulama
 │   ├── tests/
+│   │   ├── authService.test.js
 │   │   └── transactionService.test.js
 │   └── package.json
 └── frontend/
     ├── index.html
+    ├── login.html
+    ├── register.html
     └── app.js
 ```
 
 ---
 
-## 🚀 Kurulum ve Çalıştırma
+## Kurulum ve Çalıştırma
 
 ### Gereksinimler
 
@@ -77,7 +84,22 @@ http://localhost:3000
 
 ---
 
-## 🧪 Testleri Çalıştırma
+## Kimlik Doğrulama (JWT)
+
+Uygulama JWT tabanlı kimlik doğrulama kullanır.
+
+**Kayıt:** `http://localhost:3000/register`
+
+**Giriş:** `http://localhost:3000/login`
+
+- Her kullanıcı yalnızca kendi varlık ve işlemlerini görebilir
+- Şifreler bcrypt ile hashlenerek saklanır
+- Token 24 saat geçerlidir
+- Çıkış yapıldığında token silinir
+
+---
+
+## Testleri Çalıştırma
 
 ```bash
 cd backend
@@ -87,20 +109,22 @@ npm test
 Beklenen çıktı:
 
 ```
-Tests: 9 passed, 9 total
+Test Suites: 2 passed, 2 total
+Tests: 14 passed, 14 total
 ```
 
 ---
 
 ## 📡 API Kullanımı
 
-### Swagger UI
+Swagger UI: `http://localhost:3000/api-docs`
 
-Tüm endpoint'leri interaktif olarak test etmek için:
+### Auth
 
-```
-http://localhost:3000/api-docs
-```
+| Method | URL | Açıklama |
+|--------|-----|----------|
+| POST | `/api/auth/register` | Yeni kullanıcı kaydı |
+| POST | `/api/auth/login` | Giriş, token döner |
 
 ### Varlıklar (Assets)
 
@@ -131,55 +155,34 @@ http://localhost:3000/api-docs
 
 ---
 
-## 📝 Örnek İstekler
+## Veritabanı Modeli
 
-**Yeni varlık oluştur:**
-
-```json
-POST /api/assets
-Content-Type: application/json
-
-{
-  "name": "Gram Altın",
-  "type": "ALTIN",
-  "unit": "gram"
-}
-```
-
-**Yeni işlem ekle:**
-
-```json
-POST /api/transactions
-Content-Type: application/json
-
-{
-  "asset_id": 1,
-  "quantity": 5,
-  "buy_price": 4250,
-  "date": "2026-05-15",
-  "notes": "Maaştan aldım"
-}
-```
-
----
-
-## 🗄️ Veritabanı Modeli
-
-### Assets (Varlıklar)
+### Users
 
 | Alan | Tip | Açıklama |
 |------|-----|----------|
 | id | INTEGER | Primary key |
+| username | TEXT | Kullanıcı adı (unique) |
+| password | TEXT | Bcrypt ile hashlenmiş şifre |
+| created_at | TEXT | Kayıt tarihi |
+
+### Assets
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| id | INTEGER | Primary key |
+| user_id | INTEGER | Foreign key → Users |
 | name | TEXT | Varlık adı |
 | type | TEXT | ALTIN / DOVIZ / KRIPTO / HISSE / FON |
 | unit | TEXT | Birim (gram, adet vb.) |
 | created_at | TEXT | Oluşturma tarihi |
 
-### Transactions (İşlemler)
+### Transactions
 
 | Alan | Tip | Açıklama |
 |------|-----|----------|
 | id | INTEGER | Primary key |
+| user_id | INTEGER | Foreign key → Users |
 | asset_id | INTEGER | Foreign key → Assets |
 | quantity | REAL | Miktar |
 | buy_price | REAL | Alış fiyatı (TL) |
@@ -187,14 +190,3 @@ Content-Type: application/json
 | notes | TEXT | Opsiyonel not |
 
 ---
-
-## ✅ Değerlendirme Kriterleri
-
-| Kriter | Karşılanma |
-|--------|-----------|s
-| CRUD Tamlığı | Assets ve Transactions için tam CRUD |
-| Kod Kalitesi | Business logic route'lardan ayrı, `services/` katmanında |
-| REST API | Standart HTTP metodları, uygun status kodları, JSON format |
-| Swagger | Tüm endpoint'ler belgelenmiş, `/api-docs` adresinde |
-| Test | 9 unit test, Jest ile — `npm test` |
-| Versiyon Kontrol | Git + GitHub |
