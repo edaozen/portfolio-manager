@@ -512,6 +512,20 @@ async function saveTransaction() {
   if (transaction_type === 'ALIS' && (!buy_price || buy_price <= 0)) { document.getElementById('tx-error').textContent = 'Alış fiyatı giriniz.'; return; }
   if (transaction_type === 'SATIS' && (!sell_price || sell_price <= 0)) { document.getElementById('tx-error').textContent = 'Satış fiyatı giriniz.'; return; }
   if (!date) { document.getElementById('tx-error').textContent = 'Tarih seçin.'; return; }
+  if (transaction_type === 'SATIS' && editingTransactionId) {
+    const assetsRes = await fetch(`${API}/transactions?asset_id=${asset_id}`, { headers: authHeaders() });
+    const assetTxns = await assetsRes.json();
+    const kalanMiktar = assetTxns
+      .filter(t => t.transaction_type === 'ALIS')
+      .reduce((sum, t) => sum + t.quantity, 0) -
+      assetTxns
+      .filter(t => t.transaction_type === 'SATIS' && t.id !== editingTransactionId)
+      .reduce((sum, t) => sum + t.quantity, 0);
+    if (quantity > kalanMiktar) {
+      document.getElementById('tx-error').textContent = `Yetersiz miktar. Elinizdeki: ${kalanMiktar}`;
+      return;
+    }
+  }
 
   const method = editingTransactionId ? 'PUT' : 'POST';
   const url = editingTransactionId ? `${API}/transactions/${editingTransactionId}` : `${API}/transactions`;

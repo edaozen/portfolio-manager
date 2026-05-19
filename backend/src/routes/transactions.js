@@ -196,6 +196,17 @@ router.put('/:id', authMiddleware, async (req, res) => {
     if (!existing) return res.status(404).json({ error: 'İşlem bulunamadı' });
     const error = transactionService.validateTransaction(req.body);
     if (error) return res.status(400).json({ error });
+
+    if (req.body.transaction_type === 'SATIS') {
+      const assetId = parseInt(req.body.asset_id);
+      const mevcutIslemler = transactionService.getAllTransactions(req.user.id, { asset_id: assetId });
+      const eskiIslem = mevcutIslemler.find(t => t.id === parseInt(req.params.id));
+      const eskiMiktar = (eskiIslem && eskiIslem.transaction_type === 'SATIS') ? eskiIslem.quantity : 0;
+      const kalanMiktar = transactionService.calculateNetQuantity(mevcutIslemler) + eskiMiktar;
+      if (req.body.quantity > kalanMiktar) {
+        return res.status(400).json({ error: `Yetersiz miktar. Elinizdeki: ${kalanMiktar}` });
+      }
+    }
     const transaction = transactionService.updateTransaction(req.params.id, req.body, req.user.id);
     res.json(transaction);
   } catch (e) {
