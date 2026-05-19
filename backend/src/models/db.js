@@ -1,9 +1,12 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+require('dotenv').config();
 
 const db = new Database(path.join(__dirname, '../../portfolio.db'));
 
 db.exec(`
+  PRAGMA foreign_keys = ON;
+
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
@@ -25,8 +28,10 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     asset_id INTEGER NOT NULL,
+    transaction_type TEXT NOT NULL DEFAULT 'ALIS',
     quantity REAL NOT NULL,
-    buy_price REAL NOT NULL,
+    buy_price REAL,
+    sell_price REAL,
     date TEXT NOT NULL,
     notes TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

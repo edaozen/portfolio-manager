@@ -21,17 +21,31 @@ const { authMiddleware } = require('../middleware');
  *         name: type
  *         schema:
  *           type: string
- *         description: Tipe göre filtrele (ALTIN, DOVIZ vb.)
+ *           enum: [ALTIN, DOVIZ, KRIPTO, HISSE, FON]
+ *         description: Tipe göre filtrele
+ *       - in: query
+ *         name: transaction_type
+ *         schema:
+ *           type: string
+ *           enum: [ALIS, SATIS]
+ *         description: İşlem tipine göre filtrele
  *     responses:
  *       200:
  *         description: İşlem listesi
+ *       401:
+ *         description: Yetkisiz erişim
  */
-router.get('/', authMiddleware, (req, res) => {
-  const filters = {};
-  if (req.query.asset_id) filters.asset_id = req.query.asset_id;
-  if (req.query.type) filters.type = req.query.type;
-  const transactions = transactionService.getAllTransactions(req.user.id, filters);
-  res.json(transactions);
+router.get('/', authMiddleware, async (req, res) => {
+  try {
+    const filters = {};
+    if (req.query.asset_id) filters.asset_id = req.query.asset_id;
+    if (req.query.type) filters.type = req.query.type;
+    if (req.query.transaction_type) filters.transaction_type = req.query.transaction_type;
+    const transactions = transactionService.getAllTransactions(req.user.id, filters);
+    res.json(transactions);
+  } catch (e) {
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
 });
 
 /**
@@ -53,18 +67,24 @@ router.get('/', authMiddleware, (req, res) => {
  *         description: İşlem bulundu
  *       404:
  *         description: Bulunamadı
+ *       401:
+ *         description: Yetkisiz erişim
  */
-router.get('/:id', authMiddleware, (req, res) => {
-  const transaction = transactionService.getTransactionById(req.params.id, req.user.id);
-  if (!transaction) return res.status(404).json({ error: 'İşlem bulunamadı' });
-  res.json(transaction);
+router.get('/:id', authMiddleware, async (req, res) => {
+  try {
+    const transaction = transactionService.getTransactionById(req.params.id, req.user.id);
+    if (!transaction) return res.status(404).json({ error: 'İşlem bulunamadı' });
+    res.json(transaction);
+  } catch (e) {
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
 });
 
 /**
  * @swagger
  * /api/transactions:
  *   post:
- *     summary: Yeni işlem ekle
+ *     summary: Yeni işlem ekle (Alış veya Satış)
  *     tags: [Transactions]
  *     security:
  *       - bearerAuth: []
@@ -74,17 +94,26 @@ router.get('/:id', authMiddleware, (req, res) => {
  *         application/json:
  *           schema:
  *             type: object
- *             required: [asset_id, quantity, buy_price, date]
+ *             required: [asset_id, transaction_type, quantity, date]
  *             properties:
  *               asset_id:
  *                 type: integer
  *                 example: 1
+ *               transaction_type:
+ *                 type: string
+ *                 enum: [ALIS, SATIS]
+ *                 example: ALIS
  *               quantity:
  *                 type: number
  *                 example: 5
  *               buy_price:
  *                 type: number
+ *                 description: Alış işleminde zorunlu
  *                 example: 4250
+ *               sell_price:
+ *                 type: number
+ *                 description: Satış işleminde zorunlu
+ *                 example: 4500
  *               date:
  *                 type: string
  *                 example: "2026-05-19"
@@ -95,13 +124,28 @@ router.get('/:id', authMiddleware, (req, res) => {
  *       201:
  *         description: İşlem oluşturuldu
  *       400:
- *         description: Geçersiz veri
+ *         description: Geçersiz veri veya yetersiz miktar
+ *       401:
+ *         description: Yetkisiz erişim
  */
-router.post('/', authMiddleware, (req, res) => {
-  const error = transactionService.validateTransaction(req.body);
-  if (error) return res.status(400).json({ error });
-  const transaction = transactionService.createTransaction(req.body, req.user.id);
-  res.status(201).json(transaction);
+router.post('/', authMiddleware, async (req, res) => {
+  try {
+    const error = transactionService.validateTransaction(req.body);
+    if (error) return res.status(400).json({ error });
+
+    if (req.body.transaction_type === 'SATIS') {
+      const mevcutIslemler = transactionService.getAllTransactions(req.user.id, { asset_id: req.body.asset_id });
+      const kalanMiktar = transactionService.calculateNetQuantity(mevcutIslemler);
+      if (req.body.quantity > kalanMiktar) {
+        return res.status(400).json({ error: `Yetersiz miktar. Elinizdeki: ${kalanMiktar}` });
+      }
+    }
+
+    const transaction = transactionService.createTransaction(req.body, req.user.id);
+    res.status(201).json(transaction);
+  } catch (e) {
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
 });
 
 /**
@@ -125,34 +169,38 @@ router.post('/', authMiddleware, (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               asset_id:
- *                 type: integer
- *                 example: 1
+ *               transaction_type:
+ *                 type: string
+ *                 enum: [ALIS, SATIS]
  *               quantity:
  *                 type: number
- *                 example: 5
  *               buy_price:
  *                 type: number
- *                 example: 4250
+ *               sell_price:
+ *                 type: number
  *               date:
  *                 type: string
- *                 example: "2026-05-19"
  *               notes:
  *                 type: string
- *                 example: "Güncellendi"
  *     responses:
  *       200:
  *         description: Güncellendi
  *       404:
  *         description: Bulunamadı
+ *       401:
+ *         description: Yetkisiz erişim
  */
-router.put('/:id', authMiddleware, (req, res) => {
-  const existing = transactionService.getTransactionById(req.params.id, req.user.id);
-  if (!existing) return res.status(404).json({ error: 'İşlem bulunamadı' });
-  const error = transactionService.validateTransaction(req.body);
-  if (error) return res.status(400).json({ error });
-  const transaction = transactionService.updateTransaction(req.params.id, req.body, req.user.id);
-  res.json(transaction);
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    const existing = transactionService.getTransactionById(req.params.id, req.user.id);
+    if (!existing) return res.status(404).json({ error: 'İşlem bulunamadı' });
+    const error = transactionService.validateTransaction(req.body);
+    if (error) return res.status(400).json({ error });
+    const transaction = transactionService.updateTransaction(req.params.id, req.body, req.user.id);
+    res.json(transaction);
+  } catch (e) {
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
 });
 
 /**
@@ -174,12 +222,18 @@ router.put('/:id', authMiddleware, (req, res) => {
  *         description: Silindi
  *       404:
  *         description: Bulunamadı
+ *       401:
+ *         description: Yetkisiz erişim
  */
-router.delete('/:id', authMiddleware, (req, res) => {
-  const existing = transactionService.getTransactionById(req.params.id, req.user.id);
-  if (!existing) return res.status(404).json({ error: 'İşlem bulunamadı' });
-  transactionService.deleteTransaction(req.params.id, req.user.id);
-  res.status(204).send();
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const existing = transactionService.getTransactionById(req.params.id, req.user.id);
+    if (!existing) return res.status(404).json({ error: 'İşlem bulunamadı' });
+    transactionService.deleteTransaction(req.params.id, req.user.id);
+    res.status(204).send();
+  } catch (e) {
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
 });
 
 module.exports = router;

@@ -26,7 +26,7 @@
     .badge-KRIPTO { background: #1e1b4b; color: #a78bfa; }
     .badge-HISSE { background: #0c1a2e; color: #38bdf8; }
     .badge-FON { background: #2d1b69; color: #e879f9; }
-    .card-actions { display: flex; gap: 8px; }
+    .card-actions { display: flex; gap: 8px; flex-shrink: 0; }
     .btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: opacity 0.2s; }
     .btn:hover { opacity: 0.85; }
     .btn-primary { background: #38bdf8; color: #0f172a; }
@@ -56,6 +56,10 @@
     .modal-content { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 28px; width: 90%; max-width: 480px; }
     .modal-content h3 { margin-bottom: 20px; color: #f1f5f9; }
     .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+    .tx-type-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tx-type-toggle select { flex: 1; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px 12px; color: #e2e8f0; font-size: 14px; outline: none; }
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-bar select { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; font-size: 13px; outline: none; }
   </style>
 </head>
 <body>
@@ -72,21 +76,45 @@
 <nav>
   <button class="active" onclick="showPage('summary')">📈 Portföy Özeti</button>
   <button onclick="showPage('assets')">💎 Varlıklarım</button>
- <button onclick="showPage('transactions')">📋 İşlemler <span id="tx-badge" style="display:none; background:#38bdf8; color:#0f172a; border-radius:10px; padding:1px 7px; font-size:11px; font-weight:700; margin-left:4px;"></span></button>
+  <button onclick="showPage('transactions')">📋 İşlemler <span id="tx-badge" style="display:none; background:#38bdf8; color:#0f172a; border-radius:10px; padding:1px 7px; font-size:11px; font-weight:700; margin-left:4px;"></span></button>
 </nav>
 
 <main>
 
-  <!-- ÖZET -->
+ <!-- ÖZET -->
   <div id="page-summary" class="page active">
     <h2>Portföy Özeti</h2>
     <div id="total-card" class="total-card">
-      <h3>Toplam Yatırım</h3>
-      <div class="amount" id="total-amount">Yükleniyor...</div>
+  <h3>Portföy Özeti</h3>
+  <div style="display:flex; justify-content:center; gap:48px; margin-top:12px; flex-wrap:wrap;">
+    <div>
+      <div style="font-size:12px; color:#64748b; margin-bottom:4px;">Toplam Alış</div>
+      <div class="amount" id="total-amount" style="font-size:28px;">Yükleniyor...</div>
     </div>
-   <div id="chart-container" style="display:none; gap:24px; align-items:center; justify-content:center; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:28px; margin-bottom:24px;">
-      <canvas id="portfolio-chart" width="200" height="200"></canvas>
-      <div id="chart-legend" style="min-width:180px; max-width:220px;"></div>
+    <div>
+      <div style="font-size:12px; color:#64748b; margin-bottom:4px;">Toplam Satış</div>
+      <div id="total-sold" style="font-size:28px; font-weight:700; color:#f1f5f9;">-</div>
+    </div>
+    <div>
+      <div style="font-size:12px; color:#64748b; margin-bottom:4px;">Kar / Zarar</div>
+      <div id="total-profit" style="font-size:28px; font-weight:700;">-</div>
+    </div>
+  </div>
+</div>
+    <div id="chart-container" style="display:none; gap:24px; align-items:flex-start; justify-content:center; flex-wrap:wrap; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:28px; margin-bottom:24px;">
+      <div style="text-align:center;">
+        <div style="font-size:13px; color:#4ade80; margin-bottom:8px; font-weight:600;">💰 Alışlar</div>
+        <canvas id="chart-alis" width="180" height="180"></canvas>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:13px; color:#ef4444; margin-bottom:8px; font-weight:600;">📤 Satışlar</div>
+        <canvas id="chart-satis" width="180" height="180"></canvas>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:13px; color:#94a3b8; margin-bottom:8px; font-weight:600;">📊 Kar / Zarar</div>
+        <canvas id="chart-profit" width="180" height="180"></canvas>
+      </div>
+      <div id="chart-legend" style="min-width:120px; display:flex; flex-direction:column; justify-content:center;"></div>
     </div>
     <div id="summary-grid" class="summary-grid"></div>
   </div>
@@ -109,8 +137,8 @@
       <h2>İşlemler</h2>
       <button class="btn btn-primary" onclick="openTransactionModal()">+ Yeni İşlem</button>
     </div>
-    <div style="margin-bottom:16px;">
-      <select id="filter-type" onchange="loadTransactions()" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px 12px;color:#e2e8f0;">
+    <div class="filter-bar">
+      <select id="filter-type" onchange="loadTransactions()">
         <option value="">Tüm Tipler</option>
         <option value="ALTIN">Altın</option>
         <option value="DOVIZ">Döviz</option>
@@ -118,22 +146,16 @@
         <option value="HISSE">Hisse</option>
         <option value="FON">Fon</option>
       </select>
+      <select id="filter-tx-type" onchange="loadTransactions()">
+        <option value="">Alış & Satış</option>
+        <option value="ALIS">Sadece Alış</option>
+        <option value="SATIS">Sadece Satış</option>
+      </select>
     </div>
     <div id="transactions-list"></div>
   </div>
 
 </main>
-
-<!-- DETAY MODAL -->
-<div id="detail-modal" class="modal">
-  <div class="modal-content" style="max-width:520px; max-height:80vh; overflow-y:auto;">
-    <h3 id="detail-modal-title"></h3>
-    <div id="detail-modal-list" style="margin-top:16px;"></div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeDetailModal()">Kapat</button>
-    </div>
-  </div>
-</div>
 
 <!-- VARLIK MODAL -->
 <div id="asset-modal" class="modal">
@@ -177,12 +199,23 @@
         <select id="tx-asset"></select>
       </div>
       <div class="form-group">
+        <label>İşlem Tipi</label>
+        <select id="tx-type" onchange="toggleTransactionType()">
+          <option value="ALIS">📈 Alış</option>
+          <option value="SATIS">📉 Satış</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label>Miktar</label>
         <input id="tx-quantity" type="number" step="any" placeholder="5">
       </div>
-      <div class="form-group">
+      <div class="form-group" id="buy-price-group">
         <label>Alış Fiyatı (TL)</label>
-        <input id="tx-price" type="number" step="any" placeholder="4250">
+        <input id="tx-buy-price" type="number" step="any" placeholder="4250">
+      </div>
+      <div class="form-group" id="sell-price-group" style="display:none;">
+        <label>Satış Fiyatı (TL)</label>
+        <input id="tx-sell-price" type="number" step="any" placeholder="4500">
       </div>
       <div class="form-group">
         <label>Tarih</label>
@@ -197,6 +230,17 @@
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeTransactionModal()">İptal</button>
       <button class="btn btn-primary" onclick="saveTransaction()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAY MODAL -->
+<div id="detail-modal" class="modal">
+  <div class="modal-content" style="max-width:520px; max-height:80vh; overflow-y:auto;">
+    <h3 id="detail-modal-title"></h3>
+    <div id="detail-modal-list" style="margin-top:16px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeDetailModal()">Kapat</button>
     </div>
   </div>
 </div>
