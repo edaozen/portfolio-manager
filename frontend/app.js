@@ -90,20 +90,22 @@ async function loadSummary() {
   const res = await fetch(`${API}/portfolio/summary`, { headers: authHeaders() });
   const data = await res.json();
 
+  // Toplam kart
   document.getElementById('total-amount').textContent = formatMoney(data.totalInvested);
-
+  document.getElementById('total-sold').textContent = formatMoney(data.totalSold);
   const profitEl = document.getElementById('total-profit');
-  if (data.realizedProfit !== 0) {
-    const isProfit = data.realizedProfit > 0;
-    profitEl.textContent = `${isProfit ? '📈 Kar' : '📉 Zarar'}: ${formatMoney(Math.abs(data.realizedProfit))}`;
-    profitEl.style.color = isProfit ? '#4ade80' : '#ef4444';
-    profitEl.style.display = 'block';
-  } else {
-    profitEl.style.display = 'none';
-  }
+  const isProfit = data.realizedProfit >= 0;
+  profitEl.textContent = (isProfit ? '+' : '') + formatMoney(data.realizedProfit);
+  profitEl.style.color = isProfit ? '#4ade80' : '#ef4444';
 
   const grid = document.getElementById('summary-grid');
   grid.innerHTML = '';
+
+  if (Object.keys(data.summary).length === 0) {
+    grid.innerHTML = '<div class="empty">Henüz işlem yok. İşlemler sekmesinden ekleyebilirsiniz.</div>';
+    document.getElementById('chart-container').style.display = 'none';
+    return;
+  }
 
   for (const type in data.summary) {
     const s = data.summary[type];
@@ -124,6 +126,10 @@ async function loadSummary() {
           <span>Toplam Yatırım</span>
           <span style="color:#f1f5f9; font-weight:600;">${formatMoney(s.totalInvested)}</span>
         </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+          <span>Toplam Satış</span>
+          <span style="color:#f1f5f9; font-weight:600;">${formatMoney(s.totalSold)}</span>
+        </div>
         ${s.realizedProfit !== 0 ? `
         <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
           <span>Gerçekleşen ${s.realizedProfit > 0 ? 'Kar' : 'Zarar'}</span>
@@ -140,12 +146,6 @@ async function loadSummary() {
       <div style="margin-top:8px; font-size:11px; color:#475569">👆 İşlemleri görmek için tıkla</div>
     `;
     grid.appendChild(card);
-  }
-
-  if (Object.keys(data.summary).length === 0) {
-    grid.innerHTML = '<div class="empty">Henüz işlem yok. İşlemler sekmesinden ekleyebilirsiniz.</div>';
-    document.getElementById('chart-container').style.display = 'none';
-    return;
   }
 
   document.getElementById('chart-container').style.display = 'flex';
