@@ -76,7 +76,7 @@ npm install
 npm start
 ```
 
-> 💡 Veritabanı (`portfolio.db`) ilk çalıştırmada otomatik olarak oluşturulur. Elle bir şey yapmanıza gerek yoktur.
+> Veritabanı (`portfolio.db`) ilk çalıştırmada otomatik olarak oluşturulur. Elle bir şey yapmanıza gerek yoktur.
 
 **4. Tarayıcıda açın:**
 
