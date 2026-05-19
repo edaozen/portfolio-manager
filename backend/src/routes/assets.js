@@ -20,6 +20,26 @@ router.get('/', authMiddleware, (req, res) => {
   res.json(assets);
 });
 
+/**
+ * @swagger
+ * /api/assets/{id}:
+ *   get:
+ *     summary: Tek varlık getir
+ *     tags: [Assets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Varlık bulundu
+ *       404:
+ *         description: Bulunamadı
+ */
 router.get('/:id', authMiddleware, (req, res) => {
   const asset = assetService.getAssetById(req.params.id, req.user.id);
   if (!asset) return res.status(404).json({ error: 'Varlık bulunamadı' });
@@ -54,6 +74,8 @@ router.get('/:id', authMiddleware, (req, res) => {
  *     responses:
  *       201:
  *         description: Varlık oluşturuldu
+ *       400:
+ *         description: Geçersiz veri
  */
 router.post('/', authMiddleware, (req, res) => {
   const error = assetService.validateAsset(req.body);
@@ -62,6 +84,42 @@ router.post('/', authMiddleware, (req, res) => {
   res.status(201).json(asset);
 });
 
+/**
+ * @swagger
+ * /api/assets/{id}:
+ *   put:
+ *     summary: Varlık güncelle
+ *     tags: [Assets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Gram Altın
+ *               type:
+ *                 type: string
+ *                 example: ALTIN
+ *               unit:
+ *                 type: string
+ *                 example: gram
+ *     responses:
+ *       200:
+ *         description: Güncellendi
+ *       404:
+ *         description: Bulunamadı
+ */
 router.put('/:id', authMiddleware, (req, res) => {
   const existing = assetService.getAssetById(req.params.id, req.user.id);
   if (!existing) return res.status(404).json({ error: 'Varlık bulunamadı' });
@@ -71,6 +129,28 @@ router.put('/:id', authMiddleware, (req, res) => {
   res.json(asset);
 });
 
+/**
+ * @swagger
+ * /api/assets/{id}:
+ *   delete:
+ *     summary: Varlık sil
+ *     tags: [Assets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       204:
+ *         description: Silindi
+ *       404:
+ *         description: Bulunamadı
+ *       400:
+ *         description: İşlemleri olan varlık silinemez
+ */
 router.delete('/:id', authMiddleware, (req, res) => {
   const existing = assetService.getAssetById(req.params.id, req.user.id);
   if (!existing) return res.status(404).json({ error: 'Varlık bulunamadı' });
