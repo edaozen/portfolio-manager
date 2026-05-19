@@ -71,6 +71,8 @@ npm install
 **3. Sunucuyu başlatın:**
 ```bash
 npm start
+# veya PowerShell'de script hatası alırsanız:
+node src/app.js
 ```
 
 >  Veritabanı (`portfolio.db`) ilk çalıştırmada otomatik olarak oluşturulur.
