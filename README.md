@@ -72,7 +72,14 @@ npm install
 
 **3. Sunucuyu başlatın:**
 
+Ana klasörden:
 ```bash
+npm start
+```
+
+veya backend klasöründen:
+```bash
+cd backend
 npm start
 ```
 
