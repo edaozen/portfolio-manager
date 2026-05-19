@@ -240,48 +240,51 @@ function drawBarChart(canvasId, summary) {
   }
 
   const maxAbs = Math.max(...profits.map(Math.abs), 1);
-  const padding = 30;
-  const chartHeight = canvas.height - padding * 2;
-  const chartWidth = canvas.width - padding * 2;
-  const barWidth = Math.min(40, chartWidth / types.length - 10);
-  const zeroY = padding + chartHeight / 2;
-
-  ctx.strokeStyle = '#475569';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(padding, zeroY);
-  ctx.lineTo(canvas.width - padding, zeroY);
-  ctx.stroke();
-
-  types.forEach((type, i) => {
-    const profit = profits[i];
-    const barHeight = (Math.abs(profit) / maxAbs) * (chartHeight / 2 - 10);
-    const x = padding + (chartWidth / types.length) * i + (chartWidth / types.length - barWidth) / 2;
-    const y = profit >= 0 ? zeroY - barHeight : zeroY;
-    const color = profit >= 0 ? '#4ade80' : '#ef4444';
-
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.roundRect(x, y, barWidth, barHeight || 2, 4);
-    ctx.fill();
-
-    ctx.fillStyle = TYPE_COLORS[type] || '#94a3b8';
-    ctx.font = '9px Segoe UI';
-    ctx.textAlign = 'center';
-    ctx.fillText(type.slice(0, 3), x + barWidth / 2, canvas.height - 8);
-
-    if (profit !== 0) {
-      ctx.fillStyle = color;
-      ctx.font = 'bold 8px Segoe UI';
-      const label = (profit >= 0 ? '+' : '') + Math.round(Math.abs(profit) / 1000) + 'K';
-      ctx.fillText(label, x + barWidth / 2, profit >= 0 ? y - 4 : y + barHeight + 10);
-    }
-  });
+  const padding = { top: 20, bottom: 24, left: 10, right: 10 };
+  const chartH = canvas.height - padding.top - padding.bottom;
+  const chartW = canvas.width - padding.left - padding.right;
+  const zeroY = padding.top + chartH / 2; // sıfır çizgisi tam ortada
+  const barW = Math.min(36, chartW / types.length - 12);
+  const halfH = chartH / 2 - 6;
 
   ctx.fillStyle = '#94a3b8';
   ctx.font = '9px Segoe UI';
   ctx.textAlign = 'center';
   ctx.fillText('KAR / ZARAR', canvas.width / 2, 12);
+
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding.left, zeroY);
+  ctx.lineTo(canvas.width - padding.right, zeroY);
+  ctx.stroke();
+
+  types.forEach((type, i) => {
+    const profit = profits[i];
+    const barH = (Math.abs(profit) / maxAbs) * halfH;
+    const x = padding.left + (chartW / types.length) * i + (chartW / types.length - barW) / 2;
+    const y = profit >= 0 ? zeroY - barH : zeroY;
+    const color = profit >= 0 ? '#4ade80' : '#ef4444';
+
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.roundRect(x, y, barW, barH, 3);
+    ctx.fill();
+
+    if (profit !== 0) {
+      ctx.fillStyle = color;
+      ctx.font = 'bold 8px Segoe UI';
+      ctx.textAlign = 'center';
+      const label = (profit >= 0 ? '+' : '') + 
+        (Math.abs(profit) >= 1000 ? Math.round(profit / 1000) + 'K' : Math.round(profit) + '');
+      ctx.fillText(label, x + barW / 2, profit >= 0 ? y - 4 : y + barH + 10);
+    }
+
+    ctx.fillStyle = TYPE_COLORS[type] || '#94a3b8';
+    ctx.font = '9px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText(type.slice(0, 3), x + barW / 2, canvas.height - 6);
+  });
 }
 
 function drawLegend(summary) {
