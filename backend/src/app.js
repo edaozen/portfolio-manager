@@ -75,7 +75,8 @@ app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, '../../frontend/register.html'));
 });
 
-const PORT = 3000;
+require('dotenv').config();
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Sunucu çalışıyor: http://localhost:${PORT}`);
   console.log(`Swagger: http://localhost:${PORT}/api-docs`);

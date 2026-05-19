@@ -1,8 +1,10 @@
+require('dotenv').config();
+
 const db = require('../models/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const SECRET = 'portfolio_secret_key_2026';
+const SECRET = process.env.JWT_SECRET;
 
 function register(username, password) {
   if (!username || username.trim() === '') return { error: 'Kullanıcı adı boş olamaz' };

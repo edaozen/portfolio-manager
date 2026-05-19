@@ -15,9 +15,13 @@ const { authMiddleware } = require('../middleware');
  *       200:
  *         description: Varlık listesi
  */
-router.get('/', authMiddleware, (req, res) => {
-  const assets = assetService.getAllAssets(req.user.id);
-  res.json(assets);
+router.get('/', authMiddleware, async (req, res) => {
+  try {
+    const assets = assetService.getAllAssets(req.user.id);
+    res.json(assets);
+  } catch (e) {
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
 });
 
 /**
@@ -40,10 +44,14 @@ router.get('/', authMiddleware, (req, res) => {
  *       404:
  *         description: Bulunamadı
  */
-router.get('/:id', authMiddleware, (req, res) => {
-  const asset = assetService.getAssetById(req.params.id, req.user.id);
-  if (!asset) return res.status(404).json({ error: 'Varlık bulunamadı' });
-  res.json(asset);
+router.get('/:id', authMiddleware, async (req, res) => {
+  try {
+    const asset = assetService.getAssetById(req.params.id, req.user.id);
+    if (!asset) return res.status(404).json({ error: 'Varlık bulunamadı' });
+    res.json(asset);
+  } catch (e) {
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
 });
 
 /**
@@ -77,11 +85,15 @@ router.get('/:id', authMiddleware, (req, res) => {
  *       400:
  *         description: Geçersiz veri
  */
-router.post('/', authMiddleware, (req, res) => {
-  const error = assetService.validateAsset(req.body);
-  if (error) return res.status(400).json({ error });
-  const asset = assetService.createAsset(req.body, req.user.id);
-  res.status(201).json(asset);
+router.post('/', authMiddleware, async (req, res) => {
+  try {
+    const error = assetService.validateAsset(req.body);
+    if (error) return res.status(400).json({ error });
+    const asset = assetService.createAsset(req.body, req.user.id);
+    res.status(201).json(asset);
+  } catch (e) {
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
 });
 
 /**
@@ -107,26 +119,27 @@ router.post('/', authMiddleware, (req, res) => {
  *             properties:
  *               name:
  *                 type: string
- *                 example: Gram Altın
  *               type:
  *                 type: string
- *                 example: ALTIN
  *               unit:
  *                 type: string
- *                 example: gram
  *     responses:
  *       200:
  *         description: Güncellendi
  *       404:
  *         description: Bulunamadı
  */
-router.put('/:id', authMiddleware, (req, res) => {
-  const existing = assetService.getAssetById(req.params.id, req.user.id);
-  if (!existing) return res.status(404).json({ error: 'Varlık bulunamadı' });
-  const error = assetService.validateAsset(req.body);
-  if (error) return res.status(400).json({ error });
-  const asset = assetService.updateAsset(req.params.id, req.body, req.user.id);
-  res.json(asset);
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    const existing = assetService.getAssetById(req.params.id, req.user.id);
+    if (!existing) return res.status(404).json({ error: 'Varlık bulunamadı' });
+    const error = assetService.validateAsset(req.body);
+    if (error) return res.status(400).json({ error });
+    const asset = assetService.updateAsset(req.params.id, req.body, req.user.id);
+    res.json(asset);
+  } catch (e) {
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
 });
 
 /**
@@ -151,10 +164,10 @@ router.put('/:id', authMiddleware, (req, res) => {
  *       400:
  *         description: İşlemleri olan varlık silinemez
  */
-router.delete('/:id', authMiddleware, (req, res) => {
-  const existing = assetService.getAssetById(req.params.id, req.user.id);
-  if (!existing) return res.status(404).json({ error: 'Varlık bulunamadı' });
+router.delete('/:id', authMiddleware, async (req, res) => {
   try {
+    const existing = assetService.getAssetById(req.params.id, req.user.id);
+    if (!existing) return res.status(404).json({ error: 'Varlık bulunamadı' });
     assetService.deleteAsset(req.params.id, req.user.id);
     res.status(204).send();
   } catch (e) {

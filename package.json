@@ -1,0 +1,9 @@
+{
+  "name": "portfolio-manager",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "cd backend && npm start",
+    "test": "cd backend && npm test",
+    "install:deps": "cd backend && npm install"
+  }
+}
