@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const transactionService = require('../services/transactionService');
 const { authMiddleware } = require('../middleware');
+const db = require('../models/db');
 
 /**
  * @swagger
@@ -169,7 +170,7 @@ router.post('/', authMiddleware, async (req, res) => {
  *           schema:
  *             type: object
  *             required: [asset_id, transaction_type, quantity, date]
- *             *             properties:
+ *             properties:
  *               asset_id:
  *                 type: integer
  *                 example: 1
@@ -253,6 +254,27 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     const existing = transactionService.getTransactionById(req.params.id, req.user.id);
     if (!existing) return res.status(404).json({ error: 'İşlem bulunamadı' });
     transactionService.deleteTransaction(req.params.id, req.user.id);
+    res.status(204).send();
+  } catch (e) {
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/transactions:
+ *   delete:
+ *     summary: Tüm işlemleri sil
+ *     tags: [Transactions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       204:
+ *         description: Tümü silindi
+ */
+router.delete('/', authMiddleware, async (req, res) => {
+  try {
+    db.prepare('DELETE FROM transactions WHERE user_id = ?').run(req.user.id);
     res.status(204).send();
   } catch (e) {
     res.status(500).json({ error: 'Sunucu hatası' });

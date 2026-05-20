@@ -123,7 +123,10 @@
   <div id="page-assets" class="page">
     <div class="top-bar">
       <h2>Varlıklarım</h2>
-      <button class="btn btn-primary" onclick="openAssetModal()">+ Yeni Varlık</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-primary" onclick="openAssetModal()">+ Yeni Varlık</button>
+        <button class="btn btn-danger" onclick="deleteAllAssets()">🗑️ Tüm Varlıkları Sil</button>
+      </div>
     </div>
     <div class="search-bar">
       <input type="text" id="asset-search" placeholder="🔍 Varlık adına göre ara..." oninput="loadAssets(this.value)">
@@ -135,7 +138,10 @@
   <div id="page-transactions" class="page">
     <div class="top-bar">
       <h2>İşlemler</h2>
-      <button class="btn btn-primary" onclick="openTransactionModal()">+ Yeni İşlem</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-primary" onclick="openTransactionModal()">+ Yeni İşlem</button>
+        <button class="btn btn-danger" onclick="deleteAllTransactions()">🗑️ Tüm İşlemleri Sil</button>
+      </div>
     </div>
     <div class="filter-bar">
       <select id="filter-type" onchange="loadTransactions()">

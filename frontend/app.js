@@ -85,12 +85,12 @@ async function updateBadges() {
   }
 }
 
+// ─── ÖZET ─────────────────────────────────────────────────
 async function loadSummary() {
   document.getElementById('header-username').textContent = `👤 ${username}`;
   const res = await fetch(`${API}/portfolio/summary`, { headers: authHeaders() });
   const data = await res.json();
 
-  // Toplam kart
   document.getElementById('total-amount').textContent = formatMoney(data.totalInvested);
   document.getElementById('total-sold').textContent = formatMoney(data.totalSold);
   const profitEl = document.getElementById('total-profit');
@@ -155,6 +155,7 @@ async function loadSummary() {
   drawLegend(data.summary);
 }
 
+// ─── PASTA GRAFİK ─────────────────────────────────────────
 function drawPieChart(canvasId, summary, getValue, title) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -222,6 +223,7 @@ function drawPieChart(canvasId, summary, getValue, title) {
   ctx.fillText(formatMoney(total).replace(' ₺', '₺'), cx, cy + 10);
 }
 
+// ─── BAR CHART ────────────────────────────────────────────
 function drawBarChart(canvasId, summary) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -240,46 +242,48 @@ function drawBarChart(canvasId, summary) {
   }
 
   const maxAbs = Math.max(...profits.map(Math.abs), 1);
-  const padding = { top: 20, bottom: 24, left: 10, right: 10 };
-  const chartH = canvas.height - padding.top - padding.bottom;
-  const chartW = canvas.width - padding.left - padding.right;
-  const zeroY = padding.top + chartH / 2; // sıfır çizgisi tam ortada
-  const barW = Math.min(36, chartW / types.length - 12);
-  const halfH = chartH / 2 - 6;
+  const padding = 30;
+  const chartHeight = canvas.height - padding * 2;
+  const chartWidth = canvas.width - padding * 2;
+  const barWidth = Math.min(40, chartWidth / types.length - 10);
+  const zeroY = padding + chartHeight / 2;
 
   ctx.strokeStyle = '#475569';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(padding.left, zeroY);
-  ctx.lineTo(canvas.width - padding.right, zeroY);
+  ctx.moveTo(padding, zeroY);
+  ctx.lineTo(canvas.width - padding, zeroY);
   ctx.stroke();
 
   types.forEach((type, i) => {
     const profit = profits[i];
-    const barH = (Math.abs(profit) / maxAbs) * halfH;
-    const x = padding.left + (chartW / types.length) * i + (chartW / types.length - barW) / 2;
-    const y = profit >= 0 ? zeroY - barH : zeroY;
+    const barHeight = (Math.abs(profit) / maxAbs) * (chartHeight / 2 - 10);
+    const x = padding + (chartWidth / types.length) * i + (chartWidth / types.length - barWidth) / 2;
+    const y = profit >= 0 ? zeroY - barHeight : zeroY;
     const color = profit >= 0 ? '#4ade80' : '#ef4444';
 
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.roundRect(x, y, barW, barH, 3);
+    ctx.roundRect(x, y, barWidth, barHeight || 2, 4);
     ctx.fill();
-
-    if (profit !== 0) {
-      ctx.fillStyle = color;
-      ctx.font = 'bold 8px Segoe UI';
-      ctx.textAlign = 'center';
-      const label = (profit >= 0 ? '+' : '') + 
-  (Math.abs(profit) >= 1000 ? (profit / 1000).toFixed(1) + 'K' : Math.round(profit) + '');
-      ctx.fillText(label, x + barW / 2, profit >= 0 ? y - 4 : y + barH + 10);
-    }
 
     ctx.fillStyle = TYPE_COLORS[type] || '#94a3b8';
     ctx.font = '9px Segoe UI';
     ctx.textAlign = 'center';
-    ctx.fillText(type.slice(0, 3), x + barW / 2, canvas.height - 6);
+    ctx.fillText(type.slice(0, 3), x + barWidth / 2, canvas.height - 8);
+
+    if (profit !== 0) {
+      ctx.fillStyle = color;
+      ctx.font = 'bold 8px Segoe UI';
+      const label = (profit >= 0 ? '+' : '') + Math.round(Math.abs(profit) / 1000) + 'K';
+      ctx.fillText(label, x + barWidth / 2, profit >= 0 ? y - 4 : y + barHeight + 10);
+    }
   });
+
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '9px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText('KAR / ZARAR', canvas.width / 2, 12);
 }
 
 function drawLegend(summary) {
@@ -296,6 +300,7 @@ function drawLegend(summary) {
   }
 }
 
+// ─── VARLIKLAR ─────────────────────────────────────────────
 async function loadAssets(searchTerm = '') {
   const res = await fetch(`${API}/assets`, { headers: authHeaders() });
   let assets = await res.json();
@@ -375,6 +380,19 @@ async function deleteAsset(id) {
   refreshCurrentPage();
 }
 
+async function deleteAllAssets() {
+  if (!confirm('Tüm varlıklar silinecek. Bağlı tüm işlemler de otomatik olarak silinecektir. Emin misiniz?')) return;
+  await fetch(`${API}/assets`, { method: 'DELETE', headers: authHeaders() });
+  refreshCurrentPage();
+}
+
+async function deleteAllTransactions() {
+  if (!confirm('Tüm işlemler silinecek. Emin misiniz?')) return;
+  await fetch(`${API}/transactions`, { method: 'DELETE', headers: authHeaders() });
+  refreshCurrentPage();
+}
+
+// ─── İŞLEMLER ─────────────────────────────────────────────
 async function loadTransactions() {
   const type = document.getElementById('filter-type')?.value || '';
   const txType = document.getElementById('filter-tx-type')?.value || '';
@@ -507,6 +525,7 @@ async function saveTransaction() {
   if (transaction_type === 'ALIS' && (!buy_price || buy_price <= 0)) { document.getElementById('tx-error').textContent = 'Alış fiyatı giriniz.'; return; }
   if (transaction_type === 'SATIS' && (!sell_price || sell_price <= 0)) { document.getElementById('tx-error').textContent = 'Satış fiyatı giriniz.'; return; }
   if (!date) { document.getElementById('tx-error').textContent = 'Tarih seçin.'; return; }
+
   if (transaction_type === 'SATIS' && editingTransactionId) {
     const assetsRes = await fetch(`${API}/transactions?asset_id=${asset_id}`, { headers: authHeaders() });
     const assetTxns = await assetsRes.json();
@@ -521,6 +540,7 @@ async function saveTransaction() {
       return;
     }
   }
+
   if (transaction_type === 'ALIS' && editingTransactionId) {
     const assetsRes = await fetch(`${API}/transactions?asset_id=${asset_id}`, { headers: authHeaders() });
     const assetTxns = await assetsRes.json();

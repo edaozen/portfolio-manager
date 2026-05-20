@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const assetService = require('../services/assetService');
 const { authMiddleware } = require('../middleware');
+const db = require('../models/db');
 
 /**
  * @swagger
@@ -172,6 +173,28 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     res.status(204).send();
   } catch (e) {
     res.status(400).json({ error: 'Bu varlığa ait işlemler var, önce onları silin' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/assets:
+ *   delete:
+ *     summary: Tüm varlıkları ve işlemleri sil
+ *     tags: [Assets]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       204:
+ *         description: Tümü silindi
+ */
+router.delete('/', authMiddleware, async (req, res) => {
+  try {
+    db.prepare('DELETE FROM transactions WHERE user_id = ?').run(req.user.id);
+    db.prepare('DELETE FROM assets WHERE user_id = ?').run(req.user.id);
+    res.status(204).send();
+  } catch (e) {
+    res.status(500).json({ error: 'Sunucu hatası' });
   }
 });
 
