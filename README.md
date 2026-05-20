@@ -129,6 +129,7 @@ Swagger UI: `http://localhost:3000/api-docs`
 | POST | `/api/assets` | Yeni varlık oluştur |
 | PUT | `/api/assets/:id` | Varlık güncelle |
 | DELETE | `/api/assets/:id` | Varlık sil |
+| DELETE | `/api/assets` | Tüm varlıkları ve işlemleri sil |
 
 ### İşlemler (Transactions)
 | Method | URL | Açıklama |
@@ -139,6 +140,7 @@ Swagger UI: `http://localhost:3000/api-docs`
 | POST | `/api/transactions` | Yeni alış veya satış ekle |
 | PUT | `/api/transactions/:id` | İşlem güncelle |
 | DELETE | `/api/transactions/:id` | İşlem sil |
+| DELETE | `/api/transactions` | Tüm işlemleri sil |
 
 ### Portföy
 | Method | URL | Açıklama |
