@@ -169,23 +169,29 @@ router.post('/', authMiddleware, async (req, res) => {
  *           schema:
  *             type: object
  *             required: [asset_id, transaction_type, quantity, date]
- *             properties:
+ *             *             properties:
  *               asset_id:
  *                 type: integer
  *                 example: 1
  *               transaction_type:
  *                 type: string
  *                 enum: [ALIS, SATIS]
+ *                 example: ALIS
  *               quantity:
  *                 type: number
+ *                 example: 5
  *               buy_price:
  *                 type: number
+ *                 example: 4250
  *               sell_price:
  *                 type: number
+ *                 example: 4500
  *               date:
  *                 type: string
+ *                 example: "2026-05-20"
  *               notes:
  *                 type: string
+ *                 example: "Güncellendi"
  *     responses:
  *       200:
  *         description: Güncellendi
