@@ -25,6 +25,12 @@ const swaggerOptions = {
       version: '1.0.0',
       description: 'Kişisel Yatırım Portföy Yöneticisi API',
     },
+     servers: [
+      {
+        url: 'http://localhost:3000',
+        description: 'Geliştirme sunucusu'
+      }
+    ],
     components: {
       securitySchemes: {
         bearerAuth: {
