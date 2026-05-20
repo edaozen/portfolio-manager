@@ -168,7 +168,11 @@ router.post('/', authMiddleware, async (req, res) => {
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [asset_id, transaction_type, quantity, date]
  *             properties:
+ *               asset_id:
+ *                 type: integer
+ *                 example: 1
  *               transaction_type:
  *                 type: string
  *                 enum: [ALIS, SATIS]
@@ -185,6 +189,8 @@ router.post('/', authMiddleware, async (req, res) => {
  *     responses:
  *       200:
  *         description: Güncellendi
+ *       400:
+ *         description: Geçersiz veri
  *       404:
  *         description: Bulunamadı
  *       401:
